@@ -26,14 +26,20 @@ class MessageController extends Controller
         }
 
         // Get all messages between these two users (both directions)
-        $messages = Message::where(function ($query) use ($user, $receiverId) {
-            $query->where('sender_id', $user->id)
+        $messages = Message::active()
+        ->where(function ($query) use ($user, $receiverId) {
+            $query->where(function ($q) use ($user, $receiverId) {
+                $q->where('sender_id', $user->id)
                   ->where('receiver_id', $receiverId);
-        })->orWhere(function ($query) use ($user, $receiverId) {
-            $query->where('sender_id', $receiverId)
+            })->orWhere(function ($q) use ($user, $receiverId) {
+                $q->where('sender_id', $receiverId)
                   ->where('receiver_id', $user->id);
+            });
         })
-        ->where('is_deleted', false)
+        ->where(function ($query) {
+            $query->whereNull('expires_at')
+                  ->orWhere('expires_at', '>', now());
+        })
         ->with('attachments')
         ->orderBy('timestamp', 'asc')
         ->get()
