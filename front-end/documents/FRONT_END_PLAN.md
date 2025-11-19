@@ -17,65 +17,93 @@ This document is the authoritative blueprint for transforming the Figma-generate
 8. Security: Sanitize user-entered message content before rendering.
 
 ---
-## 2. Folder Structure (Target vs Current Implementation)
+## 2. Folder Structure (Merged: Existing + Pending)
 
+Legend: (EXISTS) currently in repo, (PENDING) to be created, (DUPLICATE) needs removal/refactor.
 
 ```
 src/
+	App.tsx                               (EXISTS) mounts router
+	App.css                               (EXISTS)
+	index.css                             (EXISTS)
+	main.tsx                              (EXISTS) wraps with QueryProvider
 	app/
-		router.tsx                  # React Router configuration
-		providers/QueryProvider.tsx # QueryClient + hydration (future SSR)
-		layout/AppLayout.tsx        # Global layout (Sidebar + Outlet)
+		router.tsx                          (EXISTS) React Router config
+		providers/
+			QueryProvider.tsx                 (EXISTS)
+		layout/
+			AppLayout.tsx                     (EXISTS)
 	features/
 		auth/
-			api/auth.ts
-			hooks/useAuth.ts
-			components/LoginForm.tsx
-			components/RegisterForm.tsx
-			components/AuthGate.tsx
+			hooks/
+				useAuth.ts                      (EXISTS)
+			components/
+				AuthGate.tsx                    (EXISTS)
+				LoginForm.tsx                   (PENDING) extract form from page
+				RegisterForm.tsx                (PENDING)
+			api/
+				auth.ts                         (PENDING) typed auth API wrappers
+			LoginPage.tsx                     (DUPLICATE) legacy page copy (remove after migration)
+			RegisterPage.tsx                  (DUPLICATE) legacy page copy (remove after migration)
 		users/
-			api/users.ts
-			hooks/useUserSearch.ts
+			api/users.ts                      (PENDING)
+			hooks/useUserSearch.ts            (PENDING)
 		friends/
-			api/friends.ts
-			hooks/useFriends.ts
-			hooks/usePendingRequests.ts
-			components/FriendList.tsx
-			components/AddFriendModal.tsx
+			api/friends.ts                    (PENDING)
+			hooks/useFriends.ts               (PENDING)
+			hooks/usePendingRequests.ts       (PENDING)
+			components/FriendList.tsx         (PENDING)
+			components/AddFriendModal.tsx     (PENDING)
 		messages/
-			api/messages.ts
-			hooks/useConversation.ts
-			hooks/useSendMessage.ts
-			components/ChatWindow.tsx
-			components/MessageBubble.tsx
+			api/messages.ts                   (PENDING)
+			hooks/useConversation.ts          (PENDING)
+			hooks/useSendMessage.ts           (PENDING)
+			components/ChatWindow.tsx         (PENDING)
+			components/MessageBubble.tsx      (PENDING)
 		profile/
-			api/profile.ts
-			hooks/useProfilePicture.ts
-			components/ProfileSettings.tsx
+			api/profile.ts                    (PENDING)
+			hooks/useProfilePicture.ts        (PENDING)
+			components/ProfileSettings.tsx    (PENDING)
 		presence/
-			hooks/usePresencePolling.ts
-		ui/                        # Curated subset from figma-generated ui/*
-			Avatar.tsx, Button.tsx, Dialog.tsx, Tabs.tsx, Input.tsx, Spinner.tsx, Toast.tsx, Skeleton.tsx
-	types/
-		api.ts                     # Shared interfaces
+			hooks/usePresencePolling.ts       (PENDING)
+		ui/                                 (PENDING) curated reusable components
+			Avatar.tsx                        (PENDING)
+			Button.tsx                        (PENDING)
+			Dialog.tsx                        (PENDING)
+			Tabs.tsx                          (PENDING)
+			Input.tsx                         (PENDING)
+			Spinner.tsx                       (PENDING)
+			Toast.tsx                         (PENDING)
+			Skeleton.tsx                      (PENDING)
 	lib/
-		axios.ts                   # Configured Axios instance
-		tokenStore.ts              # In-memory token access
-		sanitize.ts                # Message content sanitizer
-		constants.ts               # API constants, intervals
+		axios.ts                            (EXISTS) centralized instance
+		tokenStore.ts                       (EXISTS)
+		sanitize.ts                         (EXISTS)
+		constants.ts                        (EXISTS)
 	store/
-		uiStore.ts                 # Zustand store
+		uiStore.ts                          (EXISTS)
+	types/
+		api.ts                              (EXISTS) to be reconciled with target spec
 	pages/
-		LoginPage.tsx
-		RegisterPage.tsx
-		ChatsPage.tsx
-		SettingsPage.tsx
-		ProfilePage.tsx
-		NotFoundPage.tsx
-	hooks/                       # Generic reusable hooks (useDebounce, useCountdown)
-	assets/                      # Images, logos
-	test/                        # Vitest + RTL setup
+		LoginPage.tsx                       (EXISTS) will consume LoginForm
+		RegisterPage.tsx                    (EXISTS) will consume RegisterForm
+		ChatsPage.tsx                       (PENDING)
+		SettingsPage.tsx                    (PENDING)
+		ProfilePage.tsx                     (PENDING)
+		NotFoundPage.tsx                    (PENDING)
+	hooks/                                (PENDING) generic (useDebounce, useCountdown)
+	assets/                               (EXISTS placeholder directory)
+	test/                                 (PENDING) Vitest + RTL setup
 ```
+
+Immediate cleanup tasks:
+1. Remove duplicate legacy `features/auth/LoginPage.tsx` & `features/auth/RegisterPage.tsx` once page versions stable.
+2. Introduce `features/auth/api/auth.ts` and refactor `useAuth` to consume it.
+3. Create `LoginForm.tsx` / `RegisterForm.tsx` for separation of concerns.
+4. Scaffold friends + presence directories to start polling implementation.
+5. Begin extracting UI primitives into `ui/` as features are implemented.
+
+Acceptance: All new files follow this tree; duplicates eliminated; pending items tracked until completed.
 
 Acceptance: `src/` reflects structure; unused Figma artifacts removed or migrated.
 
