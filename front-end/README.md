@@ -1,73 +1,51 @@
-# React + TypeScript + Vite
+# Iris Messenger Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite client for Iris Messenger.
 
-Currently, two official plugins are available:
+## Quick Start
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+# from front-end/
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Set environment variables in `.env` (copy from `.env.example`):
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
+```
+VITE_API_URL=http://127.0.0.1:8000/api
+VITE_PRESENCE_POLL_MS=30000
+VITE_FRIENDS_POLL_MS=30000
+VITE_CONVERSATION_REFETCH_ON_FOCUS=true
+```
+
+Backend should be running at the host defined by `VITE_API_URL`.
+
+## Authentication
+- Register at /register or login at /login.
+- App routes live under /app/* and are protected.
+
+## Profile Picture
+
+- Navigate to /app/profile.
+- Use "Upload New Picture" to pick an image. Constraints: image/* and <= 5MB.
+- Use "Delete Picture" to remove your avatar.
+- The avatar updates instantly; cache-busting is applied so you always see the latest image.
+
+### Notes
+- Client-side validation prevents non-image uploads and files larger than 5MB.
+- Success and error toasts appear in the top-right.
+
+## Troubleshooting
+- If uploads fail, ensure backend supports:
+  - POST /api/profile/picture (multipart form data, field name: `picture`)
+  - DELETE /api/profile/picture
+- Check your CORS configuration if requests are blocked.
+
+## Tech Overview
+- React Router v6 for routing
+- TanStack Query for server state
+- Zustand for UI state (toasts)
+- TailwindCSS for styling
+- Axios for HTTP with auth interceptors
 import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```

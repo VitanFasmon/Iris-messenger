@@ -44,7 +44,7 @@ src/
 		friends/
 			api/friends.ts                    (EXISTS)
 			hooks/useFriends.ts               (EXISTS)
-			hooks/usePendingRequests.ts       (PENDING) (to split from useFriends)
+			hooks/usePendingRequests.ts       (EXISTS)
 			components/FriendList.tsx         (EXISTS)
 			components/AddFriendModal.tsx     (EXISTS)
 		messages/
@@ -53,22 +53,22 @@ src/
 			components/ConversationList.tsx   (EXISTS)
 			components/MessageList.tsx        (EXISTS)
 			components/SendMessageForm.tsx    (EXISTS)
-			components/MessageBubble.tsx      (PENDING) richer bubble w/ expiry + status
+			components/MessageBubble.tsx      (EXISTS)
 		profile/
-			api/profile.ts                    (PENDING)
-			hooks/useProfilePicture.ts        (PENDING)
-			components/ProfileSettings.tsx    (PENDING)
+			api/profile.ts                    (EXISTS)
+			hooks/useProfilePicture.ts        (EXISTS)
+			components/ProfileSettings.tsx    (EXISTS)
 		presence/
 			hooks/usePresencePolling.ts       (EXISTS)
-		ui/                                 (PENDING) reusable primitives
-			Avatar.tsx                        (PENDING)
-			Button.tsx                        (PENDING)
-			Dialog.tsx                        (PENDING)
+		ui/                                 (EXISTS) reusable primitives
+			Avatar.tsx                        (EXISTS)
+			Button.tsx                        (EXISTS)
+			Dialog.tsx                        (EXISTS)
 			Tabs.tsx                          (PENDING)
-			Input.tsx                         (PENDING)
-			Spinner.tsx                       (PENDING)
-			Toast.tsx                         (PENDING)
-			Skeleton.tsx                      (PENDING)
+			Input.tsx                         (EXISTS)
+			Spinner.tsx                       (EXISTS)
+			Toast.tsx                         (EXISTS)
+			Skeleton.tsx                      (EXISTS)
 	lib/axios.ts                          (EXISTS)
 	lib/tokenStore.ts                     (EXISTS)
 	lib/sanitize.ts                       (EXISTS)
@@ -83,7 +83,7 @@ src/
 		SettingsPage.tsx                    (PENDING)
 		ProfilePage.tsx                     (PENDING)
 		NotFoundPage.tsx                    (PENDING)
-	hooks/                                (PENDING) generic utilities
+	hooks/                                (EXISTS) generic utilities
 	assets/                               (EXISTS)
 	test/                                 (PENDING)
 ```
@@ -138,9 +138,9 @@ src/
 			components/SendMessageForm.tsx    (EXISTS)
 			components/MessageBubble.tsx      (EXISTS)
 		profile/
-			api/profile.ts                    (IN-PROGRESS)
-			hooks/useProfilePicture.ts        (IN-PROGRESS)
-			components/ProfileSettings.tsx    (IN-PROGRESS)
+			api/profile.ts                    (EXISTS)
+			hooks/useProfilePicture.ts        (EXISTS)
+			components/ProfileSettings.tsx    (EXISTS)
 		presence/
 			hooks/usePresencePolling.ts       (EXISTS)
 		ui/                                 (EXISTS) reusable primitives
