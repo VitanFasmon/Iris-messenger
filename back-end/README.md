@@ -45,16 +45,6 @@ php artisan key:generate
 php artisan jwt:secret
 ```
 
-Update `.env` with your database credentials:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=messenger_db
-DB_USERNAME=root
-DB_PASSWORD=your_password
-```
 
 ### 3. Database Setup
 
