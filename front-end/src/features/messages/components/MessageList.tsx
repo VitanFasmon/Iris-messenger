@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useMessages } from "../hooks/useMessages";
+import { MessageBubble } from "./MessageBubble";
 
 interface Props {
   conversationId: string | null;
@@ -27,15 +28,7 @@ export const MessageList: React.FC<Props> = ({ conversationId }) => {
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4">
       {data?.data.map((m) => (
-        <div
-          key={m.id}
-          className="max-w-[70%] rounded px-3 py-2 text-sm shadow bg-white dark:bg-gray-800"
-        >
-          <p className="whitespace-pre-wrap wrap-break-word">{m.content}</p>
-          <p className="mt-1 text-[10px] text-gray-400">
-            {new Date(m.created_at).toLocaleTimeString()}
-          </p>
-        </div>
+        <MessageBubble key={m.id} message={m as any} />
       ))}
       <div ref={bottomRef} />
     </div>

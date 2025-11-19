@@ -32,9 +32,9 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
             className="flex items-center gap-3 rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-2"
           >
             <div className="relative w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
-              {f.avatar_url ? (
+              {f.profile_picture_url ? (
                 <img
-                  src={f.avatar_url}
+                  src={f.profile_picture_url}
                   alt={f.username}
                   className="w-full h-full object-cover"
                 />

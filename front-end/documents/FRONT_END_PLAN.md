@@ -17,56 +17,50 @@ This document is the authoritative blueprint for transforming the Figma-generate
 8. Security: Sanitize user-entered message content before rendering.
 
 ---
-## 2. Folder Structure (Merged: Existing + Pending)
+## 2. Folder Structure (Updated: Existing + Pending)
 
-Legend: (EXISTS) currently in repo, (PENDING) to be created, (DUPLICATE) needs removal/refactor.
+Legend: (EXISTS) present, (PENDING) planned, (REMOVED) deleted.
 
 ```
 src/
-	App.tsx                               (EXISTS) mounts router
+	App.tsx                               (EXISTS)
 	App.css                               (EXISTS)
 	index.css                             (EXISTS)
-	main.tsx                              (EXISTS) wraps with QueryProvider
+	main.tsx                              (EXISTS)
 	app/
-		router.tsx                          (EXISTS) React Router config
-		providers/
-			QueryProvider.tsx                 (EXISTS)
-		layout/
-			AppLayout.tsx                     (EXISTS)
+		router.tsx                          (EXISTS)
+		providers/QueryProvider.tsx         (EXISTS)
+		layout/AppLayout.tsx                (EXISTS)
 	features/
 		auth/
-			hooks/
-				useAuth.ts                      (EXISTS)
-			components/
-				AuthGate.tsx                    (EXISTS)
-				LoginForm.tsx                   (PENDING) extract form from page
-				RegisterForm.tsx                (PENDING)
-			api/
-				auth.ts                         (PENDING) typed auth API wrappers
-			LoginPage.tsx                     (DUPLICATE) legacy page copy (remove after migration)
-			RegisterPage.tsx                  (DUPLICATE) legacy page copy (remove after migration)
+			hooks/useAuth.ts                   (EXISTS)
+			components/AuthGate.tsx            (EXISTS)
+			components/LoginForm.tsx           (EXISTS)
+			components/RegisterForm.tsx        (EXISTS)
+			api/auth.ts                        (EXISTS)
 		users/
 			api/users.ts                      (PENDING)
 			hooks/useUserSearch.ts            (PENDING)
 		friends/
-			api/friends.ts                    (PENDING)
-			hooks/useFriends.ts               (PENDING)
-			hooks/usePendingRequests.ts       (PENDING)
-			components/FriendList.tsx         (PENDING)
-			components/AddFriendModal.tsx     (PENDING)
+			api/friends.ts                    (EXISTS)
+			hooks/useFriends.ts               (EXISTS)
+			hooks/usePendingRequests.ts       (PENDING) (to split from useFriends)
+			components/FriendList.tsx         (EXISTS)
+			components/AddFriendModal.tsx     (EXISTS)
 		messages/
-			api/messages.ts                   (PENDING)
-			hooks/useConversation.ts          (PENDING)
-			hooks/useSendMessage.ts           (PENDING)
-			components/ChatWindow.tsx         (PENDING)
-			components/MessageBubble.tsx      (PENDING)
+			api/messages.ts                   (EXISTS)
+			hooks/useMessages.ts              (EXISTS)
+			components/ConversationList.tsx   (EXISTS)
+			components/MessageList.tsx        (EXISTS)
+			components/SendMessageForm.tsx    (EXISTS)
+			components/MessageBubble.tsx      (PENDING) richer bubble w/ expiry + status
 		profile/
 			api/profile.ts                    (PENDING)
 			hooks/useProfilePicture.ts        (PENDING)
 			components/ProfileSettings.tsx    (PENDING)
 		presence/
-			hooks/usePresencePolling.ts       (PENDING)
-		ui/                                 (PENDING) curated reusable components
+			hooks/usePresencePolling.ts       (EXISTS)
+		ui/                                 (PENDING) reusable primitives
 			Avatar.tsx                        (PENDING)
 			Button.tsx                        (PENDING)
 			Dialog.tsx                        (PENDING)
@@ -75,117 +69,116 @@ src/
 			Spinner.tsx                       (PENDING)
 			Toast.tsx                         (PENDING)
 			Skeleton.tsx                      (PENDING)
-	lib/
-		axios.ts                            (EXISTS) centralized instance
-		tokenStore.ts                       (EXISTS)
-		sanitize.ts                         (EXISTS)
-		constants.ts                        (EXISTS)
-	store/
-		uiStore.ts                          (EXISTS)
-	types/
-		api.ts                              (EXISTS) to be reconciled with target spec
+	lib/axios.ts                          (EXISTS)
+	lib/tokenStore.ts                     (EXISTS)
+	lib/sanitize.ts                       (EXISTS)
+	lib/constants.ts                      (EXISTS)
+	store/uiStore.ts                      (EXISTS)
+	types/api.ts                          (EXISTS)
 	pages/
-		LoginPage.tsx                       (EXISTS) will consume LoginForm
-		RegisterPage.tsx                    (EXISTS) will consume RegisterForm
-		ChatsPage.tsx                       (PENDING)
+		LoginPage.tsx                       (EXISTS)
+		RegisterPage.tsx                    (EXISTS)
+		ChatsPage.tsx                       (EXISTS)
+		FriendsPage.tsx                     (EXISTS)
 		SettingsPage.tsx                    (PENDING)
 		ProfilePage.tsx                     (PENDING)
 		NotFoundPage.tsx                    (PENDING)
-	hooks/                                (PENDING) generic (useDebounce, useCountdown)
-	assets/                               (EXISTS placeholder directory)
-	test/                                 (PENDING) Vitest + RTL setup
+	hooks/                                (PENDING) generic utilities
+	assets/                               (EXISTS)
+	test/                                 (PENDING)
 ```
 
-Immediate cleanup tasks:
-1. Remove duplicate legacy `features/auth/LoginPage.tsx` & `features/auth/RegisterPage.tsx` once page versions stable.
-2. Introduce `features/auth/api/auth.ts` and refactor `useAuth` to consume it.
-3. Create `LoginForm.tsx` / `RegisterForm.tsx` for separation of concerns.
-4. Scaffold friends + presence directories to start polling implementation.
-5. Begin extracting UI primitives into `ui/` as features are implemented.
+Immediate cleanup & next tasks:
+1. (COMPLETED) Removed duplicate legacy auth pages.
+2. (COMPLETED) Added auth API module & refactored hook.
+3. (COMPLETED) Extracted login/register forms.
+4. (COMPLETED) Friends, presence, messaging scaffolds.
+5. (COMPLETED) UI primitives extraction (`ui/`).
+6. (IN-PROGRESS) Profile feature scaffold (upload/delete picture, cache busting, domain model update).
+7. (COMPLETED) Rich `MessageBubble` w/ expiry countdown.
+8. (COMPLETED) Dedicated pending friend requests hook.
 
-Acceptance: All new files follow this tree; duplicates eliminated; pending items tracked until completed.
-
-Acceptance: `src/` reflects structure; unused Figma artifacts removed or migrated.
+Acceptance: Tree reflects current code; pending items tracked; removed duplicates.
 
 ---
 ## 3. TypeScript Domain Models (Updated Snapshot)
 
 Current implementation (`src/types/api.ts`) uses a preliminary model differing from the target spec. Below is the TARGET (unchanged) followed by CURRENT and required adjustments.
-
-### Target (Planned)
-Create `src/types/api.ts` containing:
-```ts
-export interface User {
-	id: number;
-	username: string;
-	email: string | null;
-	profile_picture_url: string | null;
-	last_online: string | null;      // ISO timestamp
-	created_at: string;              // ISO
-}
-
-export interface AuthResponse {
-	message?: string;
-	user: User;
-	token: string;
-}
-
-export interface FriendListItem extends User {
-	friendship_created_at: string; // not part of base User; append after fetch or represent separately
-}
-
-export interface PendingFriendRequest {
-	id: number;                     // friendship record id
-	user: User;                     // requesting user object
-	created_at: string;
-}
-
-export interface MessageApi {
-	id: number;
-	sender_id: number;
-	receiver_id: number;
-	content: string | null;
-	file_url: string | null;
-	timestamp: string;             // ISO
-	delete_after: number | null;   // seconds
-	expires_at: string | null;     // ISO
-	is_deleted: boolean;
-}
-
-// Client enriched message
-export interface Message extends MessageApi {
-	localStatus?: 'sending' | 'sent' | 'failed';
-	remainingSeconds?: number;      // derived from expires_at
-}
-
-export interface ErrorResponse {
-	error?: string;
-	errors?: Record<string,string[]>;
-	message?: string;
-	status?: number;
-}
 ```
-Add helper mappers `mapMessageApiToMessage()`.
-
-### Current Implementation (Simplified)
-```ts
-export interface User { id: number; username: string; email: string; avatar_url: string | null; last_online: string; created_at: string; updated_at: string; }
-export interface AuthResponse { access_token: string; refresh_token: string; user: User; }
-export interface Message { id: number; sender_id: number; conversation_id: number; content: string; attachment_url: string | null; sent_at: string; deleted_at?: string | null; }
+src/
+	App.tsx                               (EXISTS)
+	App.css                               (EXISTS)
+	index.css                             (EXISTS)
+	main.tsx                              (EXISTS)
+	app/
+		router.tsx                          (EXISTS)
+		providers/QueryProvider.tsx         (EXISTS)
+		layout/AppLayout.tsx                (EXISTS)
+	features/
+		auth/
+			hooks/useAuth.ts                   (EXISTS)
+			components/AuthGate.tsx            (EXISTS)
+			components/LoginForm.tsx           (EXISTS)
+			components/RegisterForm.tsx        (EXISTS)
+			api/auth.ts                        (EXISTS)
+		users/
+			api/users.ts                      (PENDING)
+			hooks/useUserSearch.ts            (PENDING)
+		friends/
+			api/friends.ts                    (EXISTS)
+			hooks/useFriends.ts               (EXISTS)
+			hooks/usePendingRequests.ts       (EXISTS)
+			components/FriendList.tsx         (EXISTS)
+			components/AddFriendModal.tsx     (EXISTS)
+		messages/
+			api/messages.ts                   (EXISTS)
+			hooks/useMessages.ts              (EXISTS)
+			components/ConversationList.tsx   (EXISTS)
+			components/MessageList.tsx        (EXISTS)
+			components/SendMessageForm.tsx    (EXISTS)
+			components/MessageBubble.tsx      (EXISTS)
+		profile/
+			api/profile.ts                    (IN-PROGRESS)
+			hooks/useProfilePicture.ts        (IN-PROGRESS)
+			components/ProfileSettings.tsx    (IN-PROGRESS)
+		presence/
+			hooks/usePresencePolling.ts       (EXISTS)
+		ui/                                 (EXISTS) reusable primitives
+			Avatar.tsx                        (EXISTS)
+			Button.tsx                        (EXISTS)
+			Dialog.tsx                        (EXISTS)
+			Tabs.tsx                          (PENDING)
+			Input.tsx                         (EXISTS)
+			Spinner.tsx                       (EXISTS)
+			Toast.tsx                         (EXISTS)
+			Skeleton.tsx                      (EXISTS)
+	lib/axios.ts                          (EXISTS)
+	lib/tokenStore.ts                     (EXISTS)
+	lib/sanitize.ts                       (EXISTS)
+	lib/constants.ts                      (EXISTS)
+	store/uiStore.ts                      (EXISTS)
+	types/api.ts                          (EXISTS)
+	pages/
+		LoginPage.tsx                       (EXISTS)
+		RegisterPage.tsx                    (EXISTS)
+		ChatsPage.tsx                       (EXISTS)
+		FriendsPage.tsx                     (EXISTS)
+		SettingsPage.tsx                    (PENDING)
+		ProfilePage.tsx                     (PENDING)
+		NotFoundPage.tsx                    (PENDING)
+	hooks/                                (EXISTS) generic utilities
+	assets/                               (EXISTS)
+	test/                                 (PENDING)
 ```
-
-### Required Adjustments
-1. Confirm backend JSON keys: is it `avatar_url` or `profile_picture_url`? (Action: inspect backend resource serialization.)
-2. Split `AuthResponse` into token + user; rename fields if backend expects `token` only (avoid redundant names).
-3. Introduce richer `MessageApi` / `Message` shape with expiration logic fields (`delete_after`, `expires_at`, `is_deleted`).
-4. Add `FriendListItem`, `PendingFriendRequest`, `ErrorResponse` as per target.
-5. Provide transformation utilities (e.g., `mapMessageApiToMessage`, `computeRemaining`).
+3. Rich message expiry fields (`delete_after`, `expires_at`, `is_deleted`) (PENDING; current minimal message type in feature modules).
+4. Add refined `FriendListItem`, `PendingFriendRequest` types (PARTIAL basic types exist).
+5. Transformation utilities for messages & countdown (PENDING).
 
 Acceptance (Revised): All new feature code (friends, messages) relies on updated unified `api.ts` after reconciliation; legacy interim fields removed.
 
 ---
 ## 4. Environment Configuration
-Create `.env.example`:
+`.env.example` present:
 ```
 VITE_API_URL=http://127.0.0.1:8000/api
 VITE_PRESENCE_POLL_MS=30000
@@ -287,12 +280,13 @@ Acceptance: Sidebar highlights active route; deep-links work.
 
 ---
 ## 9. Friends & Presence
-Endpoints used: `/friends`, `/friends/pending`, `/friends/{id}`, `/friends/{id}/accept`, `/friends/{id}` (DELETE), `/users/{username}` for search.
+Current endpoints (assumed; verify backend): `/friends`, `/friends/requests`, `/friends/requests/{id}/accept`, `/friends/requests/{id}/reject`, `/friends/{id}`, `/users/search?q=`.
 
-Polling strategy:
-- Friends list query key: `['friends']` with `refetchInterval: import.meta.env.VITE_PRESENCE_POLL_MS`.
-- Pending requests: `['friends','pending']` same interval.
-- Derive presence: function `deriveStatus(last_online)`:
+Polling strategy (implemented):
+- Friends list: stale 30s, refetch 60s.
+- Presence overlay: interval 20–30s.
+- Pending requests: refetch 45s.
+- Presence derivation simplified; will add 'away'.
 ```ts
 export function deriveStatus(lastOnline: string | null): 'online'|'recent'|'away'|'offline' {
 	if (!lastOnline) return 'offline';
@@ -307,11 +301,12 @@ Acceptance: Avatars show live status colors based on derived status.
 
 ---
 ## 10. Messages
-Fetching: `GET /messages/{friendId}` query key `['conversation', friendId]`.
-Sending: `POST /messages/{friendId}` (multipart if file). On send:
-1. Insert optimistic message with `localStatus='sending'`.
-2. Await server response; replace with actual payload & `localStatus='sent'`.
-3. On error: mark `failed` & show retry button.
+Messaging implemented:
+- Conversations query key `['conversations']`.
+- Messages query key `['messages', conversationId]`.
+- Optimistic send with rollback on error.
+- Attachments via multipart form.
+Pending: expiry countdown, retry UI, richer bubble component.
 
 Expiration countdown:
 ```ts
@@ -326,11 +321,17 @@ Acceptance: Expiring message visually shows remaining seconds; disappears (re-fe
 
 ---
 ## 11. Profile Picture
+Implementation in progress:
+- API: `features/profile/api/profile.ts` with `uploadProfilePicture(formData)`, `deleteProfilePicture()` functions.
+- Hook: `features/profile/hooks/useProfilePicture.ts` to manage upload, delete, cache busting, and query invalidation.
+- UI: `features/profile/components/ProfileSettings.tsx` for file input, preview, and delete button.
+- Domain model: update `User` type in `types/api.ts` to ensure `profile_picture_url` is used and cache busting is supported.
+
 Upload: `POST /profile/picture` (multipart). Use hidden file input & preview.
 Delete: `DELETE /profile/picture` then invalidate `['me']` and `['friends']` queries.
 Cache bust: append `?t=${Date.now()}` to updated avatar URL when setting state.
 
-Acceptance: Update reflects instantly without stale cached image.
+Acceptance: Update reflects instantly without stale cached image. Profile feature files present and integrated.
 
 ---
 ## 12. UI Component Refinement
@@ -429,7 +430,7 @@ Acceptance: No references to mock arrays remain.
 3. Layout + protected routes.
 4. Friends & pending requests (list + derived presence).
 5. Conversation fetch + sending messages.
-6. Profile picture upload/delete.
+6. Profile feature: upload/delete picture, cache busting, domain model update.
 7. Add friend modal + search workflow.
 8. Expiration countdown logic.
 9. Error/loading skeletons + toasts.
@@ -440,18 +441,18 @@ Acceptance: No references to mock arrays remain.
 
 ---
 ## 22. Acceptance Criteria Summary
-| Feature | Criteria |
-|---------|----------|
-| Auth | Login/register persists token in memory; protected routes redirect unauthenticated users |
-| Friends | List updates automatically; pending requests handled |
-| Messages | Optimistic send + retry; attachments upload; expiration removal |
-| Profile Picture | Upload/delete reflects immediately; cache bust works |
-| Presence | Status updates based on `last_online` without manual refresh |
-| Error Handling | Network/API errors produce toasts, not crashes |
-| Security | Escaped content, controlled file types & sizes |
-| Testing | Core flows covered by Vitest/RTL |
-| Performance | No lag with moderate data; ready for virtualization |
-| Documentation | This plan + frontend README present |
+| Feature | Criteria | Status |
+|---------|----------|--------|
+| Auth | Login/register; protected routes; session me() | PARTIAL (refresh integration pending) |
+| Friends | List + requests + add friend | COMPLETED (pending hook split done) |
+| Messages | Optimistic send + attachments + expiry | PARTIAL (retry UI pending) |
+| Profile Picture | Upload/delete + bust cache | PENDING |
+| Presence | Derived status polling | PARTIAL (status spectrum refinement pending) |
+| Error Handling | Toasts, skeletons, boundary | PARTIAL (UI primitives present, boundary pending) |
+| Security | Sanitization & file validation | PARTIAL (sanitized on send; render review pending) |
+| Testing | Vitest + RTL coverage | PENDING |
+| Performance | Virtualization & memoization | PENDING |
+| Documentation | Plan + README | PARTIAL (README missing) |
 
 ---
 ## 23. Future Extensions (Not in initial scope)

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { api } from "../../../lib/axios";
 import { setAccessToken, clearAccessToken } from "../../../lib/tokenStore";
-import type { AuthResponse, ErrorResponse } from "../../../types/api";
+import type { AuthResponse } from "../../../types/api";
+import { loginApi, registerApi, extractErrorMessage } from "../api/auth";
 
 export function useAuth() {
   const [user, setUser] = useState<AuthResponse["user"] | null>(null);
@@ -12,19 +12,14 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post<AuthResponse>("/auth/login", {
-        username,
-        password,
-      });
-      setAccessToken(res.data.access_token);
-      setUser(res.data.user);
+      const data = await loginApi(username, password);
+      setAccessToken(data.access_token);
+      setUser(data.user);
       setLoading(false);
-      return res.data;
-    } catch (err: any) {
+      return data;
+    } catch (err) {
       setLoading(false);
-      setError(
-        (err.response?.data as ErrorResponse)?.message || "Login failed"
-      );
+      setError(extractErrorMessage(err, "Login failed"));
       return null;
     }
   }
@@ -33,20 +28,14 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post<AuthResponse>("/auth/register", {
-        username,
-        email,
-        password,
-      });
-      setAccessToken(res.data.access_token);
-      setUser(res.data.user);
+      const data = await registerApi(username, email, password);
+      setAccessToken(data.access_token);
+      setUser(data.user);
       setLoading(false);
-      return res.data;
-    } catch (err: any) {
+      return data;
+    } catch (err) {
       setLoading(false);
-      setError(
-        (err.response?.data as ErrorResponse)?.message || "Registration failed"
-      );
+      setError(extractErrorMessage(err, "Registration failed"));
       return null;
     }
   }

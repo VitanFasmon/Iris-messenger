@@ -5,7 +5,7 @@ import type { AxiosResponse } from "axios";
 export interface Friend {
   id: string;
   username: string;
-  avatar_url?: string | null;
+  profile_picture_url?: string | null;
   last_online?: string | null; // ISO date string
 }
 
@@ -22,7 +22,7 @@ export interface FriendRequest {
 export interface UserSearchResult {
   id: string;
   username: string;
-  avatar_url?: string | null;
+  profile_picture_url?: string | null;
 }
 
 export interface SendFriendRequestPayload {
