@@ -34,6 +34,8 @@ class FriendController extends Controller
                 'id' => $friend->id,
                 'username' => $friend->username,
                 'email' => $friend->email,
+                'profile_picture_url' => $friend->profile_picture_url,
+                'last_online' => $friend->last_online,
                 'friendship_created_at' => $friendship->created_at,
             ];
         });
@@ -59,6 +61,8 @@ class FriendController extends Controller
                         'id' => $friendship->user->id,
                         'username' => $friendship->user->username,
                         'email' => $friendship->user->email,
+                        'profile_picture_url' => $friendship->user->profile_picture_url,
+                        'last_online' => $friendship->user->last_online,
                     ],
                     'created_at' => $friendship->created_at,
                 ];

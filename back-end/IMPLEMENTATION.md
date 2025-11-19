@@ -15,7 +15,9 @@ The complete Laravel REST API backend for Iris Messenger is now ready. All core 
 2. **User Management**
    - User profile retrieval
    - Search users by username
-   - Custom user schema (username, email, password_hash)
+   - Profile picture upload and management
+   - Last online time tracking
+   - Custom user schema (username, email, password_hash, profile_picture_url, last_online)
 
 3. **Friend System**
    - Send friend requests
@@ -49,7 +51,7 @@ The complete Laravel REST API backend for Iris Messenger is now ready. All core 
    - Supports credentials for JWT cookies
 
 8. **Database Schema**
-   - Users table (with unique username/email)
+   - Users table (with unique username/email, profile_picture_url, last_online)
    - Friends table (with status: pending/accepted)
    - Messages table (with expiry tracking)
    - Attachments table (file metadata)
@@ -69,11 +71,15 @@ back-end/
 ├── app/
 │   ├── Console/Commands/
 │   │   └── DeleteExpiredMessages.php       # Scheduled cleanup task
-│   ├── Http/Controllers/Api/
-│   │   ├── AuthController.php              # Login, register, JWT tokens
-│   │   ├── FriendController.php            # Friend requests & management
-│   │   ├── MessageController.php           # Send/receive messages & files
-│   │   └── UserController.php              # User search & profiles
+│   ├── Http/
+│   │   ├── Controllers/Api/
+│   │   │   ├── AuthController.php          # Login, register, JWT tokens
+│   │   │   ├── FriendController.php        # Friend requests & management
+│   │   │   ├── MessageController.php       # Send/receive messages & files
+│   │   │   ├── ProfileController.php       # Profile picture management
+│   │   │   └── UserController.php          # User search & profiles
+│   │   └── Middleware/
+│   │       └── UpdateLastOnline.php        # Auto-update last_online timestamp
 │   └── Models/
 │       ├── User.php                         # User + JWT implementation
 │       ├── Friend.php                       # Friendship relationships
@@ -85,16 +91,27 @@ back-end/
 │   └── jwt.php                              # JWT settings
 ├── database/
 │   ├── migrations/
-│   │   └── 2025_11_17_001500_create_iris_messenger_schema_mysql.php
+│   │   ├── 2025_11_17_001500_create_iris_messenger_schema_mysql.php
+│   │   └── 2025_11_19_154000_add_profile_picture_and_last_online_to_users_table.php
 │   └── seeders/
-│       └── DatabaseSeeder.php               # Test data: alice, bob, charlie
+│       └── DatabaseSeeder.php               # Test data with profile pictures
 ├── routes/
 │   ├── api.php                              # All API endpoints
 │   └── console.php                          # Scheduler configuration
+├── tests/
+│   └── Feature/                             # 65 comprehensive tests
+│       ├── AuthenticationTest.php
+│       ├── FriendTest.php
+│       ├── MessageTest.php
+│       ├── MessageCleanupTest.php
+│       ├── ProfileTest.php
+│       └── UserTest.php
 ├── vision/
 │   ├── vision.md                            # Project requirements & architecture
 │   └── Iris Messenger.docx                  # Original spec document
 ├── API.md                                   # Complete API documentation
+├── BEGINNER_GUIDE.md                        # PHP/Laravel guide for newcomers
+├── PROFILE_FEATURES.md                      # Profile implementation details
 ├── Iris_Messenger_API.postman_collection.json  # Postman import file
 └── README.md                                # Quick start guide
 ```
@@ -153,9 +170,9 @@ php artisan storage:link
 ## 🧪 Testing
 
 ### Test Users (after seeding)
-- **alice** / password123
-- **bob** / password123
-- **charlie** / password123
+- **alice** / password123 (profile picture, last online: 10 min ago)
+- **bob** / password123 (profile picture, last online: 5 min ago)
+- **charlie** / password123 (profile picture, last online: 2 hours ago)
 
 ### Quick Test Flow
 
@@ -195,6 +212,10 @@ curl -X GET http://127.0.0.1:8000/api/friends \
 - `GET /api/users/{username}` - Search by username
 - `GET /api/users/id/{id}` - Get by ID
 
+**Profile:**
+- `POST /api/profile/picture` - Upload/update profile picture
+- `DELETE /api/profile/picture` - Delete profile picture
+
 **Friends:**
 - `GET /api/friends` - List accepted friends
 - `GET /api/friends/pending` - Pending requests
@@ -219,8 +240,22 @@ curl -X GET http://127.0.0.1:8000/api/friends \
 ## 📖 Documentation
 
 - **[API.md](API.md)** - Complete API reference with examples
+- **[BEGINNER_GUIDE.md](BEGINNER_GUIDE.md)** - Comprehensive PHP/Laravel guide for newcomers
+- **[PROFILE_FEATURES.md](PROFILE_FEATURES.md)** - Profile picture and last online implementation details
 - **[vision/vision.md](vision/vision.md)** - Project requirements & database schema
 - **[README.md](README.md)** - Quick start guide
+
+## 🧪 Test Coverage
+
+**65 comprehensive tests** covering all features:
+- Authentication (13 tests) - Registration, login, JWT tokens
+- Friends (11 tests) - Requests, acceptance, bidirectional relationships
+- Messages (12 tests) - Sending, chat history, expiry, file uploads
+- Message Cleanup (5 tests) - Automated expiry handling
+- Profile (16 tests) - Profile pictures, last online tracking
+- Users (6 tests) - Search and profile retrieval
+
+Run tests: `php artisan test`
 
 ## ✨ What's Next
 

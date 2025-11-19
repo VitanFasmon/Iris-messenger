@@ -25,6 +25,8 @@ class User extends Authenticatable implements JWTSubject
         'username',
         'email',
         'password_hash',
+        'profile_picture_url',
+        'last_online',
     ];
 
     /**
@@ -45,7 +47,17 @@ class User extends Authenticatable implements JWTSubject
     {
         return [
             'created_at' => 'datetime',
+            'last_online' => 'datetime',
         ];
+    }
+
+    /**
+     * Update the user's last online timestamp
+     */
+    public function updateLastOnline()
+    {
+        $this->last_online = now();
+        $this->save();
     }
 
     // Relationships

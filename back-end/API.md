@@ -38,9 +38,9 @@ php artisan serve
 The API will be available at `http://127.0.0.1:8000/api`
 
 ### Test Users (after seeding)
-- **alice** / password123
-- **bob** / password123  
-- **charlie** / password123
+- **alice** / password123 (has profile picture, last online: 10 min ago)
+- **bob** / password123 (has profile picture, last online: 5 min ago)
+- **charlie** / password123 (has profile picture, last online: 2 hours ago)
 
 ## API Endpoints
 
@@ -58,6 +58,17 @@ Content-Type: application/json
 }
 ```
 
+**With Profile Picture:**
+```bash
+POST /api/auth/register
+Content-Type: multipart/form-data
+
+username=johndoe
+email=john@example.com
+password=securepassword
+profile_picture=@/path/to/image.jpg
+```
+
 Response:
 ```json
 {
@@ -66,6 +77,8 @@ Response:
     "id": 1,
     "username": "johndoe",
     "email": "john@example.com",
+    "profile_picture_url": "/storage/profile_pictures/abc123.jpg",
+    "last_online": "2025-11-19T15:45:30.000000Z",
     "created_at": "2025-11-17T12:00:00.000000Z"
   },
   "token": "eyJ0eXAiOiJKV1QiLCJhbGc..."
@@ -91,16 +104,32 @@ Response:
     "id": 1,
     "username": "alice",
     "email": "alice@example.com",
+    "profile_picture_url": "https://i.pravatar.cc/150?img=1",
+    "last_online": "2025-11-19T15:45:30.000000Z",
     "created_at": "2025-11-17T12:00:00.000000Z"
   },
   "token": "eyJ0eXAiOiJKV1QiLCJhbGc..."
 }
 ```
 
+**Note:** The `last_online` field is automatically updated on login, token refresh, and API requests (rate-limited to every 5 minutes).
+
 #### Get Current User
 ```bash
 GET /api/me
 Authorization: Bearer {token}
+```
+
+Response:
+```json
+{
+  "id": 1,
+  "username": "alice",
+  "email": "alice@example.com",
+  "profile_picture_url": "https://i.pravatar.cc/150?img=1",
+  "last_online": "2025-11-19T15:45:30.000000Z",
+  "created_at": "2025-11-17T12:00:00.000000Z"
+}
 ```
 
 #### Logout
@@ -109,11 +138,27 @@ POST /api/auth/logout
 Authorization: Bearer {token}
 ```
 
+Response:
+```json
+{
+  "message": "Successfully logged out"
+}
+```
+
 #### Refresh Token
 ```bash
 POST /api/auth/refresh
 Authorization: Bearer {token}
 ```
+
+Response:
+```json
+{
+  "token": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+**Note:** Refreshing the token also updates the `last_online` timestamp.
 
 ### Users
 
@@ -123,10 +168,71 @@ GET /api/users/{username}
 Authorization: Bearer {token}
 ```
 
+Response:
+```json
+{
+  "id": 2,
+  "username": "bob",
+  "email": "bob@example.com",
+  "profile_picture_url": "https://i.pravatar.cc/150?img=2",
+  "last_online": "2025-11-19T15:40:30.000000Z",
+  "created_at": "2025-11-17T10:30:00.000000Z"
+}
+```
+
 #### Get User by ID
 ```bash
 GET /api/users/id/{id}
 Authorization: Bearer {token}
+```
+
+Response:
+```json
+{
+  "id": 2,
+  "username": "bob",
+  "email": "bob@example.com",
+  "profile_picture_url": "https://i.pravatar.cc/150?img=2",
+  "last_online": "2025-11-19T15:40:30.000000Z",
+  "created_at": "2025-11-17T10:30:00.000000Z"
+}
+```
+
+### Profile
+
+#### Update Profile Picture
+```bash
+POST /api/profile/picture
+Authorization: Bearer {token}
+Content-Type: multipart/form-data
+
+profile_picture=@/path/to/new-image.jpg
+```
+
+**Constraints:**
+- Must be a valid image file (JPEG, PNG, GIF, etc.)
+- Maximum file size: 5MB
+- Old profile picture is automatically deleted
+
+Response:
+```json
+{
+  "message": "Profile picture updated successfully",
+  "profile_picture_url": "/storage/profile_pictures/xyz789.jpg"
+}
+```
+
+#### Delete Profile Picture
+```bash
+DELETE /api/profile/picture
+Authorization: Bearer {token}
+```
+
+Response:
+```json
+{
+  "message": "Profile picture deleted successfully"
+}
 ```
 
 ### Friends
@@ -137,7 +243,21 @@ GET /api/friends
 Authorization: Bearer {token}
 ```
 
-Returns all accepted friendships.
+Returns all accepted friendships with profile pictures and last online status.
+
+Response:
+```json
+[
+  {
+    "id": 2,
+    "username": "bob",
+    "email": "bob@example.com",
+    "profile_picture_url": "https://i.pravatar.cc/150?img=2",
+    "last_online": "2025-11-19T15:40:30.000000Z",
+    "friendship_created_at": "2025-11-17T10:00:00.000000Z"
+  }
+]
+```
 
 #### Get Pending Friend Requests
 ```bash
@@ -146,6 +266,23 @@ Authorization: Bearer {token}
 ```
 
 Returns friend requests you've received.
+
+Response:
+```json
+[
+  {
+    "id": 3,
+    "user": {
+      "id": 3,
+      "username": "charlie",
+      "email": "charlie@example.com",
+      "profile_picture_url": "https://i.pravatar.cc/150?img=3",
+      "last_online": "2025-11-19T13:45:30.000000Z"
+    },
+    "created_at": "2025-11-19T14:00:00.000000Z"
+  }
+]
+```
 
 #### Send Friend Request
 ```bash
@@ -233,15 +370,52 @@ Or run the scheduler manually in development:
 php artisan schedule:work
 ```
 
+## User Presence & Online Status
+
+The `last_online` field is automatically updated in the following situations:
+
+1. **On Registration** - Set to current timestamp
+2. **On Login** - Updated to current timestamp
+3. **On Token Refresh** - Updated to current timestamp
+4. **On API Requests** - Updated via middleware (rate-limited to every 5 minutes to reduce database writes)
+
+### Frontend Integration
+
+Display online status based on `last_online`:
+- **Online**: `last_online` within last 5 minutes
+- **Recently Active**: `last_online` within last hour  
+- **Last Seen**: Display relative time for older activity
+
+Example JavaScript logic:
+```javascript
+function getOnlineStatus(lastOnline) {
+  const now = new Date();
+  const lastOnlineDate = new Date(lastOnline);
+  const minutesAgo = (now - lastOnlineDate) / 1000 / 60;
+  
+  if (minutesAgo < 5) return 'online';
+  if (minutesAgo < 60) return `active ${Math.floor(minutesAgo)}m ago`;
+  if (minutesAgo < 1440) return `active ${Math.floor(minutesAgo / 60)}h ago`;
+  return `active ${Math.floor(minutesAgo / 1440)}d ago`;
+}
+```
+
 ## File Uploads
 
-Files are stored in `storage/app/public/uploads/`. Make sure to create the symbolic link:
+### Message Attachments
+Files are stored in `storage/app/public/uploads/`.
 
+### Profile Pictures
+Profile pictures are stored in `storage/app/public/profile_pictures/`.
+
+**Setup:**
 ```bash
 php artisan storage:link
 ```
 
-Files will be accessible at `http://127.0.0.1:8000/storage/uploads/...`
+Files will be accessible at:
+- Messages: `http://127.0.0.1:8000/storage/uploads/...`
+- Profiles: `http://127.0.0.1:8000/storage/profile_pictures/...`
 
 ## CORS Configuration
 
@@ -318,11 +492,15 @@ JWT_SECRET=your_generated_secret
 app/
 ├── Console/Commands/
 │   └── DeleteExpiredMessages.php    # Scheduled task for message cleanup
-├── Http/Controllers/Api/
-│   ├── AuthController.php           # Authentication endpoints
-│   ├── FriendController.php         # Friend management
-│   ├── MessageController.php        # Messaging & file uploads
-│   └── UserController.php           # User search/profile
+├── Http/
+│   ├── Controllers/Api/
+│   │   ├── AuthController.php       # Authentication endpoints
+│   │   ├── FriendController.php     # Friend management
+│   │   ├── MessageController.php    # Messaging & file uploads
+│   │   ├── ProfileController.php    # Profile picture management
+│   │   └── UserController.php       # User search/profile
+│   └── Middleware/
+│       └── UpdateLastOnline.php     # Auto-update last_online timestamp
 └── Models/
     ├── User.php                      # User model with JWT
     ├── Friend.php                    # Friend relationship model
@@ -331,7 +509,8 @@ app/
 
 database/
 ├── migrations/
-│   └── 2025_11_17_001500_create_iris_messenger_schema_mysql.php
+│   ├── 2025_11_17_001500_create_iris_messenger_schema_mysql.php
+│   └── 2025_11_19_154000_add_profile_picture_and_last_online_to_users_table.php
 └── seeders/
     └── DatabaseSeeder.php            # Test data seeder
 

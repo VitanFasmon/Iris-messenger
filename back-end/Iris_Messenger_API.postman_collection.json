@@ -1,7 +1,7 @@
 {
     "info": {
         "name": "Iris Messenger API",
-        "description": "Complete API collection for testing Iris Messenger backend",
+        "description": "Complete API collection for testing Iris Messenger backend. Includes authentication, messaging, friends, and profile features (profile pictures, last online tracking).",
         "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
     },
     "auth": {
@@ -43,6 +43,43 @@
                                     "language": "json"
                                 }
                             }
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/register",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "register"]
+                        }
+                    }
+                },
+                {
+                    "name": "Register with Profile Picture",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "username",
+                                    "value": "newuser",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "newuser@example.com",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "password",
+                                    "value": "password123",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "profile_picture",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
                         },
                         "url": {
                             "raw": "{{base_url}}/auth/register",
@@ -145,6 +182,45 @@
                             "raw": "{{base_url}}/users/id/2",
                             "host": ["{{base_url}}"],
                             "path": ["users", "id", "2"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Profile",
+            "item": [
+                {
+                    "name": "Update Profile Picture",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "profile_picture",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/profile/picture",
+                            "host": ["{{base_url}}"],
+                            "path": ["profile", "picture"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Profile Picture",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/profile/picture",
+                            "host": ["{{base_url}}"],
+                            "path": ["profile", "picture"]
                         }
                     }
                 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FriendController;
 use App\Http\Controllers\Api\MessageController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Public routes (no authentication required)
-Route::prefix('auth')->group(function () {
+Route::prefix('auth')->middleware('throttle:5,1')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);
 });
@@ -31,6 +32,10 @@ Route::middleware('auth:api')->group(function () {
     Route::get('users/{username}', [UserController::class, 'search']);
     Route::get('users/id/{id}', [UserController::class, 'show']);
 
+    // Profile routes
+    Route::post('profile/picture', [ProfileController::class, 'updateProfilePicture']);
+    Route::delete('profile/picture', [ProfileController::class, 'deleteProfilePicture']);
+
     // Friend routes
     Route::get('friends', [FriendController::class, 'index']);
     Route::get('friends/pending', [FriendController::class, 'pending']);
@@ -40,6 +45,6 @@ Route::middleware('auth:api')->group(function () {
 
     // Message routes
     Route::get('messages/{receiver_id}', [MessageController::class, 'index']);
-    Route::post('messages/{receiver_id}', [MessageController::class, 'store']);
+    Route::post('messages/{receiver_id}', [MessageController::class, 'store'])->middleware('throttle:30,1');
     Route::delete('messages/{id}', [MessageController::class, 'destroy']);
 });

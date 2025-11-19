@@ -20,18 +20,24 @@ class DatabaseSeeder extends Seeder
             'username' => 'alice',
             'email' => 'alice@example.com',
             'password_hash' => Hash::make('password123'),
+            'profile_picture_url' => 'https://i.pravatar.cc/150?img=1',
+            'last_online' => now()->subMinutes(10),
         ]);
 
         $bob = User::create([
             'username' => 'bob',
             'email' => 'bob@example.com',
             'password_hash' => Hash::make('password123'),
+            'profile_picture_url' => 'https://i.pravatar.cc/150?img=2',
+            'last_online' => now()->subMinutes(5),
         ]);
 
         $charlie = User::create([
             'username' => 'charlie',
             'email' => 'charlie@example.com',
             'password_hash' => Hash::make('password123'),
+            'profile_picture_url' => 'https://i.pravatar.cc/150?img=3',
+            'last_online' => now()->subHours(2),
         ]);
 
         // Create friendships

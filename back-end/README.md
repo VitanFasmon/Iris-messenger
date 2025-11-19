@@ -1,25 +1,304 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Iris Messenger API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A secure, ephemeral messaging API built with Laravel 12, featuring JWT authentication, profile management, and friend-based communication.
 
-## About Laravel
+## 🌟 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **JWT Authentication** - Secure token-based authentication with refresh tokens
+- **Profile Management** - User profile pictures with automatic cleanup and last online tracking
+- **Friend System** - Send, accept, reject, and remove friend requests
+- **Ephemeral Messages** - Messages with automatic expiration (24h, 7d, 30d, or permanent)
+- **File Attachments** - Upload files with messages (images, documents, etc.)
+- **User Presence** - Automatic "last online" tracking with 5-minute rate limiting
+- **Comprehensive Testing** - 65 feature tests with 100% endpoint coverage
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Framework**: Laravel 12.38.1
+- **Language**: PHP 8.3.6
+- **Database**: MySQL 8.x
+- **Authentication**: JWT (php-open-source-saver/jwt-auth v2.8.3)
+- **Testing**: PHPUnit with Feature Tests
+- **Storage**: Laravel Public Disk for file uploads
+
+## 📋 Prerequisites
+
+- PHP 8.3 or higher
+- Composer
+- MySQL 8.x or higher
+- Node.js & npm (for frontend integration)
+
+## 🚀 Quick Start
+
+### 1. Clone and Install Dependencies
+
+```bash
+cd back-end
+composer install
+```
+
+### 2. Configure Environment
+
+```bash
+cp .env.example .env
+php artisan key:generate
+php artisan jwt:secret
+```
+
+Update `.env` with your database credentials:
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=messenger_db
+DB_USERNAME=root
+DB_PASSWORD=your_password
+```
+
+### 3. Database Setup
+
+```bash
+# Create database
+mysql -u root -p -e "CREATE DATABASE messenger_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Run migrations
+php artisan migrate
+
+# Seed test data (optional)
+php artisan db:seed
+```
+
+### 4. Storage Setup
+
+```bash
+php artisan storage:link
+```
+
+### 5. Start Development Server
+
+```bash
+php artisan serve
+```
+
+The API will be available at `http://127.0.0.1:8000`
+
+### 6. Run Tests
+
+```bash
+php artisan test
+```
+
+Expected output: **65 tests passing**
+
+## 📚 API Documentation
+
+Full API documentation is available in [API.md](API.md).
+
+### Base URL
+
+```
+http://127.0.0.1:8000/api
+```
+
+### Authentication Endpoints
+
+- `POST /auth/register` - Register new user (optional profile picture)
+- `POST /auth/login` - Login and receive JWT token
+- `POST /auth/logout` - Logout (invalidate token)
+- `POST /auth/refresh` - Refresh JWT token
+- `GET /auth/me` - Get authenticated user info
+
+### User Endpoints
+
+- `GET /users/search?username={query}` - Search users by username
+- `GET /users/{id}` - Get user profile
+
+### Profile Endpoints
+
+- `POST /profile/picture` - Upload/update profile picture (multipart/form-data)
+- `DELETE /profile/picture` - Delete profile picture
+
+### Friend Endpoints
+
+- `GET /friends` - List all friends
+- `POST /friends` - Send friend request
+- `GET /friends/pending` - List pending requests
+- `PUT /friends/{friendId}/accept` - Accept friend request
+- `DELETE /friends/{friendId}/reject` - Reject friend request
+- `DELETE /friends/{friendId}` - Remove friend
+
+### Message Endpoints
+
+- `GET /messages/{friendId}` - Get conversation with friend
+- `POST /messages` - Send message (with optional file attachment)
+- `DELETE /messages/{messageId}` - Delete message
+
+## 🧪 Test User Credentials
+
+Three test users are seeded automatically:
+
+| Username | Password | Profile Picture | Last Online |
+|----------|----------|----------------|-------------|
+| alice | password | Avatar 1 | ~10 min ago |
+| bob | password | Avatar 2 | ~5 min ago |
+| charlie | password | Avatar 3 | ~2 hours ago |
+
+**Seeded Relationships:**
+- Alice ↔️ Bob (friends)
+- Alice ↔️ Charlie (friends)
+- Bob → Charlie (pending request)
+
+## 📂 Project Structure
+
+```
+back-end/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/Api/
+│   │   │   ├── AuthController.php      # Registration, login, JWT
+│   │   │   ├── FriendController.php    # Friend management
+│   │   │   ├── MessageController.php   # Messaging
+│   │   │   ├── ProfileController.php   # Profile pictures
+│   │   │   └── UserController.php      # User search/info
+│   │   └── Middleware/
+│   │       └── UpdateLastOnline.php    # Auto-update last_online
+│   └── Models/
+│       ├── User.php                    # User model with JWT
+│       ├── Friend.php                  # Friend relationships
+│       └── Message.php                 # Messages with expiration
+├── database/
+│   ├── migrations/                     # Schema definitions
+│   └── seeders/
+│       └── DatabaseSeeder.php          # Test data
+├── routes/
+│   └── api.php                         # API routes
+├── tests/
+│   └── Feature/
+│       ├── AuthTest.php                # Authentication tests (7)
+│       ├── FriendTest.php              # Friend system tests (19)
+│       ├── MessageTest.php             # Messaging tests (23)
+│       └── ProfileTest.php             # Profile features tests (16)
+├── storage/
+│   └── app/
+│       └── public/
+│           ├── profile_pictures/       # User profile images
+│           └── uploads/                # Message attachments
+└── public/
+    └── storage/                        # Symlink to storage/app/public
+```
+
+## 🔒 Security Features
+
+- **JWT Authentication** - Stateless, secure token-based auth
+- **Password Hashing** - Bcrypt with configurable rounds
+- **CORS Protection** - Configurable allowed origins
+- **File Upload Validation** - Type and size restrictions
+- **Rate Limiting** - Prevents excessive last_online updates (5-minute threshold)
+- **Input Validation** - All requests validated with Laravel's validator
+
+## 📊 Database Schema
+
+### Users Table
+- `id`, `username` (unique), `email` (unique), `password_hash`
+- `profile_picture_url` (nullable), `last_online` (nullable timestamp)
+- Automatic timestamps: `created_at`, `updated_at`
+
+### Friends Table
+- `id`, `user_id`, `friend_id`, `status` (pending/accepted)
+- Unique constraint: One friendship per user pair
+- Automatic timestamps
+
+### Messages Table
+- `id`, `sender_id`, `receiver_id`, `content`, `file_path` (nullable)
+- `expires_at` (nullable), `created_at`
+- Indexes on sender_id, receiver_id for fast queries
+
+## 🚀 Deployment
+
+### Production Checklist
+
+1. **Environment Variables**
+   ```bash
+   APP_ENV=production
+   APP_DEBUG=false
+   APP_URL=https://your-domain.com
+   JWT_SECRET=<strong-random-secret>
+   DB_PASSWORD=<secure-password>
+   FRONTEND_URL=https://your-frontend-domain.com
+   ```
+
+2. **Optimize Laravel**
+   ```bash
+   composer install --optimize-autoloader --no-dev
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+3. **Database**
+   ```bash
+   php artisan migrate --force
+   ```
+
+4. **File Permissions**
+   ```bash
+   chmod -R 775 storage bootstrap/cache
+   chown -R www-data:www-data storage bootstrap/cache
+   ```
+
+5. **Web Server**
+   - Point document root to `public/` directory
+   - Configure HTTPS with valid SSL certificate
+   - Set up proper CORS headers
+
+## 📖 Additional Documentation
+
+- [API.md](API.md) - Complete API reference with examples
+- [vision/vision.md](vision/vision.md) - Project requirements and architecture
+- [IMPLEMENTATION.md](IMPLEMENTATION.md) - Technical implementation details
+- [PROFILE_FEATURES.md](PROFILE_FEATURES.md) - Profile features documentation
+- [Postman Collection](Iris_Messenger_API.postman_collection.json) - Import into Postman for testing
+
+## 🧪 Testing
+
+The project includes comprehensive feature tests covering all endpoints:
+
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test suite
+php artisan test --testsuite=Feature
+
+# Run with coverage (requires Xdebug)
+php artisan test --coverage
+```
+
+**Test Coverage:**
+- Authentication: 7 tests
+- Friend System: 19 tests  
+- Messaging: 23 tests
+- Profile Features: 16 tests
+- **Total: 65 tests**
+
+## 🤝 Contributing
+
+This is an academic project. For suggestions or issues, please contact the development team.
+
+## 📄 License
+
+Academic project - All rights reserved.
+
+## 👥 Authors
+
+Developed as part of Web Technologies course, University of Ljubljana, Faculty of Computer and Information Science.
+
+---
+
+**Last Updated**: January 2025  
+**Version**: 1.0.0  
+**Laravel Version**: 12.38.1
 
 ---
 
