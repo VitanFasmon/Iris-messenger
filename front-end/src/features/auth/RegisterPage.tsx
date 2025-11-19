@@ -1,4 +1,4 @@
-import { useAuth } from "./useAuth";
+import { useAuth } from "./hooks/useAuth";
 import { useState } from "react";
 
 export default function RegisterPage() {

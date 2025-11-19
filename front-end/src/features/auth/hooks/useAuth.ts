@@ -1,6 +1,7 @@
 import { useState } from "react";
-import api from "../../api/axios";
-import type { AuthResponse, ErrorResponse } from "../../types/api";
+import { api } from "../../../lib/axios";
+import { setAccessToken, clearAccessToken } from "../../../lib/tokenStore";
+import type { AuthResponse, ErrorResponse } from "../../../types/api";
 
 export function useAuth() {
   const [user, setUser] = useState<AuthResponse["user"] | null>(null);
@@ -15,7 +16,7 @@ export function useAuth() {
         username,
         password,
       });
-      window.__iris_access_token = res.data.access_token;
+      setAccessToken(res.data.access_token);
       setUser(res.data.user);
       setLoading(false);
       return res.data;
@@ -37,7 +38,7 @@ export function useAuth() {
         email,
         password,
       });
-      window.__iris_access_token = res.data.access_token;
+      setAccessToken(res.data.access_token);
       setUser(res.data.user);
       setLoading(false);
       return res.data;
@@ -51,7 +52,7 @@ export function useAuth() {
   }
 
   function logout() {
-    window.__iris_access_token = undefined;
+    clearAccessToken();
     setUser(null);
   }
 

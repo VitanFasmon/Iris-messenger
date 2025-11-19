@@ -17,7 +17,9 @@ This document is the authoritative blueprint for transforming the Figma-generate
 8. Security: Sanitize user-entered message content before rendering.
 
 ---
-## 2. Folder Structure (Target)
+## 2. Folder Structure (Target vs Current Implementation)
+
+
 ```
 src/
 	app/
@@ -78,7 +80,11 @@ src/
 Acceptance: `src/` reflects structure; unused Figma artifacts removed or migrated.
 
 ---
-## 3. TypeScript Domain Models
+## 3. TypeScript Domain Models (Updated Snapshot)
+
+Current implementation (`src/types/api.ts`) uses a preliminary model differing from the target spec. Below is the TARGET (unchanged) followed by CURRENT and required adjustments.
+
+### Target (Planned)
 Create `src/types/api.ts` containing:
 ```ts
 export interface User {
@@ -133,7 +139,21 @@ export interface ErrorResponse {
 ```
 Add helper mappers `mapMessageApiToMessage()`.
 
-Acceptance: All API consuming code imports from a single source of truth.
+### Current Implementation (Simplified)
+```ts
+export interface User { id: number; username: string; email: string; avatar_url: string | null; last_online: string; created_at: string; updated_at: string; }
+export interface AuthResponse { access_token: string; refresh_token: string; user: User; }
+export interface Message { id: number; sender_id: number; conversation_id: number; content: string; attachment_url: string | null; sent_at: string; deleted_at?: string | null; }
+```
+
+### Required Adjustments
+1. Confirm backend JSON keys: is it `avatar_url` or `profile_picture_url`? (Action: inspect backend resource serialization.)
+2. Split `AuthResponse` into token + user; rename fields if backend expects `token` only (avoid redundant names).
+3. Introduce richer `MessageApi` / `Message` shape with expiration logic fields (`delete_after`, `expires_at`, `is_deleted`).
+4. Add `FriendListItem`, `PendingFriendRequest`, `ErrorResponse` as per target.
+5. Provide transformation utilities (e.g., `mapMessageApiToMessage`, `computeRemaining`).
+
+Acceptance (Revised): All new feature code (friends, messages) relies on updated unified `api.ts` after reconciliation; legacy interim fields removed.
 
 ---
 ## 4. Environment Configuration

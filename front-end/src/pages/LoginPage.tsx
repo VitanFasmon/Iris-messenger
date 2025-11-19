@@ -1,4 +1,4 @@
-import { useAuth } from "./hooks/useAuth";
+import { useAuth } from "../features/auth/hooks/useAuth";
 import { useState } from "react";
 
 export default function LoginPage() {
