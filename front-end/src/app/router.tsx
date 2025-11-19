@@ -1,12 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import AppLayout from "./layout/AppLayout";
 import LoginPage from "../features/auth/LoginPage";
 import RegisterPage from "../features/auth/RegisterPage";
-// Placeholder imports for protected layout and pages
-const AppLayout = () => (
-  <div>
-    Sidebar + <Outlet />
-  </div>
-);
+// Placeholder page components (replace with real implementations later)
 const ChatsPage = () => <div>Chats</div>;
 const SettingsPage = () => <div>Settings</div>;
 const ProfilePage = () => <div>Profile</div>;

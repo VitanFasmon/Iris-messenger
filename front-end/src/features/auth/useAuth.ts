@@ -1,6 +1,6 @@
 import { useState } from "react";
-import api from "../api/axios";
-import type { AuthResponse, ErrorResponse } from "../types/api";
+import api from "../../api/axios";
+import type { AuthResponse, ErrorResponse } from "../../types/api";
 
 export function useAuth() {
   const [user, setUser] = useState<AuthResponse["user"] | null>(null);
