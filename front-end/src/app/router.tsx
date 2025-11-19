@@ -3,8 +3,9 @@ import AppLayout from "./layout/AppLayout";
 import LoginPage from "../pages/LoginPage";
 import RegisterPage from "../pages/RegisterPage";
 import AuthGate from "../features/auth/components/AuthGate";
-// Placeholder page components (replace with real implementations later)
-const ChatsPage = () => <div>Chats</div>;
+import ChatsPage from "../pages/ChatsPage";
+import FriendsPage from "../pages/FriendsPage";
+// Temporary simple placeholders for pages not yet implemented
 const SettingsPage = () => <div>Settings</div>;
 const ProfilePage = () => <div>Profile</div>;
 const NotFoundPage = () => <div>404 Not Found</div>;
@@ -24,7 +25,7 @@ export default function AppRouter() {
           }
         >
           <Route index element={<ChatsPage />} />
-          <Route path="friends" element={<ChatsPage />} />
+          <Route path="friends" element={<FriendsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
