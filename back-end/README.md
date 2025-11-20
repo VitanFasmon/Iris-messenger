@@ -71,7 +71,27 @@ php artisan storage:link
 php artisan serve
 ```
 
-The API will be available at `http://127.0.0.1:8000`
+The API will be available at `http://127.0.0.1:8000/api`
+
+**Alternative options:**
+
+```bash
+# Custom host and port
+php artisan serve --host=127.0.0.1 --port=9000
+
+# Or use PHP built-in server directly
+php -S 127.0.0.1:8000 -t public
+```
+
+**Note:** After changing configuration files (like `config/cors.php` or `.env`), clear the config cache:
+
+```bash
+php artisan config:clear
+php artisan cache:clear
+php artisan optimize:clear
+```
+
+Then restart the server (Ctrl+C and rerun `php artisan serve`).
 
 ### 6. Run Tests
 

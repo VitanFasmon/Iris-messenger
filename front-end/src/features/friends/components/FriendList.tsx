@@ -23,7 +23,11 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
   const presenceMap = new Map(presence?.map((p) => [p.id, p.status]));
 
   return (
-    <ul className={compact ? "space-y-1" : "space-y-2"}>
+    <ul
+      className={compact ? "space-y-1" : "space-y-2"}
+      role="list"
+      aria-label="Friends list"
+    >
       {friends.map((f) => {
         const status = presenceMap.get(f.id) || "offline";
         return (
@@ -35,11 +39,14 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
               {f.profile_picture_url ? (
                 <img
                   src={f.profile_picture_url}
-                  alt={f.username}
+                  alt={`${f.username}'s profile picture`}
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="w-full h-full flex items-center justify-center text-xs text-gray-600">
+                <span
+                  className="w-full h-full flex items-center justify-center text-xs text-gray-600"
+                  aria-hidden="true"
+                >
                   {f.username[0].toUpperCase()}
                 </span>
               )}
@@ -52,7 +59,8 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
                     ? "bg-yellow-500"
                     : "bg-gray-400")
                 }
-                title={status}
+                aria-label={`Status: ${status}`}
+                role="status"
               />
             </div>
             <div className="flex-1 min-w-0">

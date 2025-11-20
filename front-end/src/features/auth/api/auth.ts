@@ -6,11 +6,17 @@ export async function loginApi(
   username: string,
   password: string
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/auth/login", {
+  const { data } = await api.post("/auth/login", {
     username,
     password,
   });
-  return data;
+  // Normalize response to AuthResponse shape
+  const d: any = data;
+  return {
+    access_token: d.access_token ?? d.token,
+    refresh_token: d.refresh_token ?? null,
+    user: d.user,
+  } as AuthResponse;
 }
 
 export async function registerApi(
@@ -18,12 +24,17 @@ export async function registerApi(
   email: string,
   password: string
 ): Promise<AuthResponse> {
-  const { data } = await api.post<AuthResponse>("/auth/register", {
+  const { data } = await api.post("/auth/register", {
     username,
     email,
     password,
   });
-  return data;
+  const d: any = data;
+  return {
+    access_token: d.access_token ?? d.token,
+    refresh_token: d.refresh_token ?? null,
+    user: d.user,
+  } as AuthResponse;
 }
 
 export async function refreshTokenApi(): Promise<{ token: string }> {
@@ -31,8 +42,9 @@ export async function refreshTokenApi(): Promise<{ token: string }> {
   return data;
 }
 
+// Per backend API docs, current user endpoint is GET /api/me (not /api/auth/me)
 export async function meApi(): Promise<User> {
-  const { data } = await api.get<User>("/auth/me");
+  const { data } = await api.get<User>("/me");
   return data;
 }
 

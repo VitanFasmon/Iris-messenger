@@ -32,15 +32,27 @@ export const ProfileSettings: React.FC = () => {
         return;
       }
       const formData = new FormData();
-      formData.append("picture", file);
+      // Backend expects the field name 'profile_picture'
+      formData.append("profile_picture", file);
       upload.mutate(formData, {
         onSuccess: () =>
           pushToast({ type: "success", message: "Profile picture updated." }),
-        onError: (err: any) =>
+        onError: (err: any) => {
+          const serverMsg = err?.response?.data?.message;
+          const firstFieldError = (() => {
+            const errors = err?.response?.data?.errors;
+            if (errors && typeof errors === "object") {
+              const first = Object.values(errors)[0] as string[] | undefined;
+              return first?.[0];
+            }
+            return undefined;
+          })();
           pushToast({
             type: "error",
-            message: err?.message || "Upload failed.",
-          }),
+            message:
+              serverMsg || firstFieldError || err?.message || "Upload failed.",
+          });
+        },
       });
     }
   };
@@ -88,10 +100,12 @@ export const ProfileSettings: React.FC = () => {
           ref={fileRef}
           style={{ display: "none" }}
           onChange={handleUpload}
+          aria-label="Upload profile picture file"
         />
         <Button
           onClick={() => fileRef.current?.click()}
           loading={upload.status === "pending"}
+          aria-label="Choose profile picture to upload"
         >
           Upload New Picture
         </Button>
@@ -99,6 +113,7 @@ export const ProfileSettings: React.FC = () => {
           onClick={handleDelete}
           variant="ghost"
           loading={remove.status === "pending"}
+          aria-label="Delete current profile picture"
         >
           Delete Picture
         </Button>

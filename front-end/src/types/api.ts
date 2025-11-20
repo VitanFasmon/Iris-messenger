@@ -15,8 +15,10 @@ export interface User {
 }
 
 export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
+  // Backend may return either `access_token` or `token`
+  access_token?: string;
+  token?: string;
+  refresh_token?: string | null;
   user: User;
 }
 

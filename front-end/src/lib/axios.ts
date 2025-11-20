@@ -18,6 +18,7 @@ export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   timeout: 10000,
   headers: { "Content-Type": "application/json" },
+  withCredentials: true, // allow backend-issued cookies (e.g. refresh token) if present
 });
 
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -31,7 +32,15 @@ api.interceptors.response.use(
   async (error: AxiosError) => {
     const status = error.response?.status;
     const originalConfig = error.config;
-    if (status === 401 && originalConfig && !originalConfig.__isRetry) {
+    // Only attempt refresh if we already had an auth header (i.e. a protected request),
+    // avoid calling /auth/refresh after failed login attempts or anonymous 401s.
+    const hadAuthHeader = !!originalConfig?.headers?.Authorization;
+    if (
+      status === 401 &&
+      hadAuthHeader &&
+      originalConfig &&
+      !originalConfig.__isRetry
+    ) {
       originalConfig.__isRetry = true;
       try {
         const refreshResp = await api.post("/auth/refresh");

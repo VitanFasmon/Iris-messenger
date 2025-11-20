@@ -1,5 +1,5 @@
 import React from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, Link } from "react-router-dom";
 import { useUiStore } from "../../store/uiStore";
 import { ToastContainer } from "../../ui/Toast";
 
@@ -40,28 +40,44 @@ export default function AppLayout() {
   const { toastQueue, removeToast } = useUiStore();
   return (
     <div className="flex min-h-screen">
-      <aside className="w-64 bg-gray-900 text-white p-4">
+      <aside
+        className="w-64 bg-gray-900 text-white p-4"
+        role="navigation"
+        aria-label="Main navigation"
+      >
         <nav>
-          <ul>
+          <ul role="list">
             <li>
-              <a href="/app" className="block py-2">
+              <Link
+                to="/app"
+                className="block py-2 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+              >
                 Chats
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/app/friends" className="block py-2">
+              <Link
+                to="/app/friends"
+                className="block py-2 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+              >
                 Friends
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/app/settings" className="block py-2">
+              <Link
+                to="/app/settings"
+                className="block py-2 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+              >
                 Settings
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="/app/profile" className="block py-2">
+              <Link
+                to="/app/profile"
+                className="block py-2 hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+              >
                 Profile
-              </a>
+              </Link>
             </li>
           </ul>
         </nav>

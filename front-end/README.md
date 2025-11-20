@@ -44,8 +44,45 @@ Backend should be running at the host defined by `VITE_API_URL`.
 
 ## Tech Overview
 - React Router v6 for routing
-- TanStack Query for server state
-- Zustand for UI state (toasts)
+- TanStack Query v5 for server state (caching, polling, mutations)
+- Zustand for UI state (toasts, modals)
 - TailwindCSS for styling
 - Axios for HTTP with auth interceptors
-import reactDom from 'eslint-plugin-react-dom'
+- Vitest + React Testing Library for unit testing
+
+## Testing
+
+Run tests with:
+
+```bash
+npm test           # Watch mode
+npm run test:ui    # Vitest UI
+npm run test:coverage  # With coverage report
+```
+
+Test files live in `src/test/` mirroring the feature structure.
+
+## Accessibility
+
+This app follows WCAG 2.1 AA guidelines:
+- All interactive elements are keyboard accessible
+- Proper ARIA labels and roles throughout
+- Focus indicators visible on all interactive elements
+- Form inputs properly associated with labels
+- Screen reader friendly navigation and status updates
+
+## Architecture
+
+```
+src/
+  app/          - Router, providers, global layout
+  features/     - Domain features (auth, friends, messages, profile)
+  ui/           - Reusable primitives (Button, Input, Dialog, etc.)
+  lib/          - Utilities (axios, tokenStore, sanitize)
+  store/        - Zustand stores (uiStore for toasts)
+  types/        - TypeScript types mirroring backend API
+  pages/        - Top-level page components
+  test/         - Unit tests
+```
+
+See `documents/FRONT_END_PLAN.md` for detailed architecture and implementation plan.

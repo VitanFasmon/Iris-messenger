@@ -23,9 +23,14 @@ export const Button: React.FC<ButtonProps> = ({
   loading,
   className,
   children,
+  disabled,
   ...rest
 }) => (
-  <button className={clsx(base, variants[variant], className)} {...rest}>
+  <button
+    className={clsx(base, variants[variant], className)}
+    disabled={disabled || loading}
+    {...rest}
+  >
     {loading ? <span className="animate-pulse">…</span> : children}
   </button>
 );

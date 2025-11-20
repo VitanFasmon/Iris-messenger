@@ -18,44 +18,74 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-3"
+      aria-label="Registration form"
+    >
       <div>
-        <label className="block text-sm font-medium mb-1">Username</label>
+        <label
+          htmlFor="register-username"
+          className="block text-sm font-medium mb-1"
+        >
+          Username
+        </label>
         <input
+          id="register-username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800"
+          autoComplete="username"
+          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="your_username"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Email</label>
+        <label
+          htmlFor="register-email"
+          className="block text-sm font-medium mb-1"
+        >
+          Email
+        </label>
         <input
+          id="register-email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800"
+          autoComplete="email"
+          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="you@example.com"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Password</label>
+        <label
+          htmlFor="register-password"
+          className="block text-sm font-medium mb-1"
+        >
+          Password
+        </label>
         <input
+          id="register-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800"
+          autoComplete="new-password"
+          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           placeholder="••••••••"
         />
       </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && (
+        <p className="text-xs text-red-600" role="alert" aria-live="polite">
+          {error}
+        </p>
+      )}
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded bg-green-600 hover:bg-green-500 text-white py-2 text-sm font-medium disabled:opacity-50"
+        aria-busy={loading}
+        className="w-full rounded bg-green-600 hover:bg-green-500 text-white py-2 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500"
       >
         {loading ? "Registering..." : "Register"}
       </button>
