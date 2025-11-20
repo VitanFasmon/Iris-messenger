@@ -1,6 +1,7 @@
 import React from "react";
 import { useFriends } from "../hooks/useFriends";
 import { usePresencePolling } from "../../presence/hooks/usePresencePolling";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   compact?: boolean;
@@ -9,6 +10,7 @@ interface Props {
 export const FriendList: React.FC<Props> = ({ compact }) => {
   const { data: friends, isLoading, error } = useFriends();
   const { data: presence } = usePresencePolling(20_000);
+  const navigate = useNavigate();
 
   if (isLoading)
     return <div className="p-4 text-sm text-gray-500">Loading friends...</div>;
@@ -33,7 +35,15 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
         return (
           <li
             key={f.id}
-            className="flex items-center gap-3 rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-2"
+            className="flex items-center gap-3 rounded hover:bg-gray-50 dark:hover:bg-gray-800 p-2 cursor-pointer"
+            onClick={() => navigate(`/app/chat/${f.id}`)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate(`/app/chat/${f.id}`);
+              }
+            }}
+            tabIndex={0}
           >
             <div className="relative w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
               {f.profile_picture_url ? (

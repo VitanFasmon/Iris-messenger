@@ -1,22 +1,24 @@
 import React, { useEffect, useRef } from "react";
-import { useMessages } from "../hooks/useMessages";
+import { useDirectMessages } from "../hooks/useMessages";
 import { MessageBubble } from "./MessageBubble";
 
 interface Props {
-  conversationId: string | null;
+  receiverId: string | number | null;
 }
 
-export const MessageList: React.FC<Props> = ({ conversationId }) => {
-  const { data, isLoading, error } = useMessages(conversationId);
+export const MessageList: React.FC<Props> = ({ receiverId }) => {
+  const { data, isLoading, error } = useDirectMessages(receiverId);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data?.data.length]);
+  }, [data?.length]);
 
-  if (!conversationId)
+  if (!receiverId)
     return (
-      <div className="p-4 text-sm text-gray-500">Select a conversation.</div>
+      <div className="p-4 text-sm text-gray-500">
+        Select a friend to start chatting.
+      </div>
     );
   if (isLoading)
     return <div className="p-4 text-sm text-gray-500">Loading messages...</div>;
@@ -27,8 +29,8 @@ export const MessageList: React.FC<Props> = ({ conversationId }) => {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4">
-      {data?.data.map((m) => (
-        <MessageBubble key={m.id} message={m as any} />
+      {data?.map((m) => (
+        <MessageBubble key={m.id} message={m} />
       ))}
       <div ref={bottomRef} />
     </div>

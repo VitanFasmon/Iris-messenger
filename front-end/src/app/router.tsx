@@ -31,6 +31,7 @@ export default function AppRouter() {
           }
         >
           <Route index element={<ChatsPage />} />
+          <Route path="chat/:id" element={<ChatsPage />} />
           <Route path="friends" element={<FriendsPage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="profile" element={<ProfilePage />} />

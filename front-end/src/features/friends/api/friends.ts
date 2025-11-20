@@ -1,96 +1,62 @@
 import { api } from "../../../lib/axios";
 import type { AxiosResponse } from "axios";
 
-// --- Types (can be moved to a shared types file later) ---
-export interface Friend {
-  id: string;
+// Backend-aligned types ----------------------------------------------------
+export interface BackendFriendUser {
+  id: number | string;
   username: string;
+  email?: string | null;
   profile_picture_url?: string | null;
-  last_online?: string | null; // ISO date string
+  last_online?: string | null;
+  friendship_created_at?: string | null; // only present in /friends list
 }
 
-export interface FriendRequest {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  from_username?: string;
-  to_username?: string;
-  status: "pending" | "accepted" | "rejected";
+export interface Friend extends BackendFriendUser {}
+
+export interface PendingFriendRequest {
+  id: string | number; // friendship record id
+  user: BackendFriendUser; // sender user info
   created_at: string;
 }
 
-export interface UserSearchResult {
-  id: string;
-  username: string;
-  profile_picture_url?: string | null;
+// User lookup (single result) ----------------------------------------------
+export async function fetchUserByUsername(username: string): Promise<BackendFriendUser | null> {
+  if (!username.trim()) return null;
+  try {
+    const res: AxiosResponse<BackendFriendUser> = await api.get(`/users/${encodeURIComponent(username)}`);
+    return res.data;
+  } catch (err: any) {
+    if (err?.response?.status === 404) return null;
+    throw err;
+  }
 }
 
-export interface SendFriendRequestPayload {
-  username: string;
-}
-
-// Response wrappers
-interface Paginated<T> {
-  data: T[];
-  meta?: { page?: number; per_page?: number; total?: number };
-}
-
-// --- API calls ---
-// NOTE: Endpoint paths are assumptions; adjust to match backend when confirmed.
+// Friends list --------------------------------------------------------------
 export async function fetchFriends(): Promise<Friend[]> {
-  const res: AxiosResponse<Friend[]> = await api.get("/friends");
+  const res: AxiosResponse<BackendFriendUser[]> = await api.get("/friends");
+  return res.data.map(f => ({ ...f }));
+}
+
+// Pending requests (incoming) ----------------------------------------------
+export async function fetchPendingRequests(): Promise<PendingFriendRequest[]> {
+  const res: AxiosResponse<any[]> = await api.get("/friends/pending");
+  return res.data.map(r => ({ id: r.id, user: r.user, created_at: r.created_at }));
+}
+
+// Send friend request (target user id) -------------------------------------
+export async function sendFriendRequestToId(targetUserId: string | number): Promise<any> {
+  const res: AxiosResponse<any> = await api.post(`/friends/${targetUserId}`);
+  return res.data; // { message, friendship:{ id, status, created_at } }
+}
+
+// Accept pending request ----------------------------------------------------
+export async function acceptFriendRequest(friendshipId: string | number): Promise<any> {
+  const res: AxiosResponse<any> = await api.post(`/friends/${friendshipId}/accept`);
   return res.data;
 }
 
-export async function fetchPendingRequests(): Promise<FriendRequest[]> {
-  const res: AxiosResponse<FriendRequest[]> = await api.get(
-    "/friends/requests"
-  );
+// Reject pending OR remove existing friend ---------------------------------
+export async function deleteFriendship(friendshipId: string | number): Promise<any> {
+  const res: AxiosResponse<any> = await api.delete(`/friends/${friendshipId}`);
   return res.data;
-}
-
-export async function sendFriendRequest(
-  payload: SendFriendRequestPayload
-): Promise<FriendRequest> {
-  const res: AxiosResponse<FriendRequest> = await api.post(
-    "/friends/requests",
-    payload
-  );
-  return res.data;
-}
-
-export async function acceptFriendRequest(
-  requestId: string
-): Promise<FriendRequest> {
-  const res: AxiosResponse<FriendRequest> = await api.post(
-    `/friends/requests/${requestId}/accept`
-  );
-  return res.data;
-}
-
-export async function rejectFriendRequest(
-  requestId: string
-): Promise<FriendRequest> {
-  const res: AxiosResponse<FriendRequest> = await api.post(
-    `/friends/requests/${requestId}/reject`
-  );
-  return res.data;
-}
-
-export async function removeFriend(
-  friendId: string
-): Promise<{ success: boolean }> {
-  const res: AxiosResponse<{ success: boolean }> = await api.delete(
-    `/friends/${friendId}`
-  );
-  return res.data;
-}
-
-export async function searchUsers(query: string): Promise<UserSearchResult[]> {
-  if (!query.trim()) return [];
-  const res: AxiosResponse<Paginated<UserSearchResult>> = await api.get(
-    "/users/search",
-    { params: { q: query } }
-  );
-  return res.data.data;
 }

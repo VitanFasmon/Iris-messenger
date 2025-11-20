@@ -10,13 +10,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
-      <div className="bg-white dark:bg-gray-900 p-8 rounded shadow w-full max-w-sm space-y-4">
-        <h2 className="text-xl font-semibold">Login</h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <div className="bg-card text-card-foreground border border-border rounded-lg shadow-sm p-8 w-full max-w-md space-y-6">
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-semibold">Welcome back</h2>
+          <p className="text-sm text-muted-foreground">
+            Enter your credentials to access your account
+          </p>
+        </div>
         <LoginForm onSuccess={handleLoginSuccess} />
-        <p className="text-xs text-gray-500">
+        <p className="text-sm text-center text-muted-foreground">
           Don't have an account?{" "}
-          <a href="/register" className="text-indigo-600 hover:underline">
+          <a
+            href="/register"
+            className="text-primary hover:underline font-medium"
+          >
             Register
           </a>
         </p>

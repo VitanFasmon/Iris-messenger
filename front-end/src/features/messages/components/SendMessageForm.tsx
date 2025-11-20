@@ -1,19 +1,20 @@
 import React, { useState } from "react";
-import { useSendMessage } from "../hooks/useMessages";
+import { useSendDirectMessage } from "../hooks/useMessages";
 
 interface Props {
-  conversationId: string | null;
+  receiverId: string | number | null;
 }
 
-export const SendMessageForm: React.FC<Props> = ({ conversationId }) => {
+export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const send = useSendMessage(conversationId);
+  const send = useSendDirectMessage(receiverId);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!receiverId) return;
     if (!text.trim() && !file) return;
-    send.mutate({ content: text, attachment: file || undefined });
+    send.mutate({ content: text.trim() || undefined, file });
     setText("");
     setFile(null);
   };
@@ -47,7 +48,7 @@ export const SendMessageForm: React.FC<Props> = ({ conversationId }) => {
       />
       <button
         type="submit"
-        disabled={send.isPending || !conversationId}
+        disabled={send.isPending || !receiverId}
         aria-busy={send.isPending}
         className="px-3 py-2 rounded bg-indigo-600 text-white text-sm hover:bg-indigo-500 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
       >

@@ -20,7 +20,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 }) => (
   <div
     className={clsx(
-      "relative rounded-full bg-gray-200 overflow-hidden flex items-center justify-center text-sm font-medium select-none",
+      "relative rounded-full bg-muted overflow-hidden flex items-center justify-center text-sm font-medium select-none shadow-sm",
       className
     )}
     style={{ width: size, height: size }}
@@ -32,12 +32,12 @@ export const Avatar: React.FC<AvatarProps> = ({
         className="w-full h-full object-cover"
       />
     ) : (
-      <span>{fallback}</span>
+      <span className="text-muted-foreground">{fallback}</span>
     )}
     {statusColor && (
       <span
         className={clsx(
-          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white dark:border-gray-900",
+          "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background",
           statusColor
         )}
       />

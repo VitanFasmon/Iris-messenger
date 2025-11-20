@@ -1,85 +1,59 @@
 import { api } from "../../../lib/axios";
 import type { AxiosResponse } from "axios";
-import { sanitize } from "../../../lib/sanitize";
 
-export interface Conversation {
-  id: string;
-  title?: string | null;
-  participant_ids: string[]; // excluding current user? backend clarifies
-  updated_at: string;
-  last_message_preview?: string | null;
+export interface Attachment {
+  id: string | number;
+  file_type: string;
+  file_url: string;
 }
 
 export interface Message {
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  sender_username?: string;
-  content: string;
-  created_at: string;
-  attachment_url?: string | null;
-  deleted_at?: string | null;
+  id: string | number;
+  sender_id: string | number;
+  receiver_id: string | number;
+  content: string | null;
+  file_url: string | null;
+  timestamp: string; // ISO
+  delete_after?: number | null;
+  expires_at?: string | null;
+  attachments?: Attachment[];
+  // UI enrichment
+  localStatus?: "sending" | "sent" | "failed";
 }
 
-export interface SendMessagePayload {
-  conversationId: string;
-  content: string;
-  attachment?: File | null;
+// Fetch messages exchanged with given receiver (friend user id)
+export async function fetchMessages(receiverId: string | number): Promise<Message[]> {
+  const res: AxiosResponse<any[]> = await api.get(`/messages/${receiverId}`);
+  return res.data.map(m => ({ ...m, localStatus: "sent" }));
 }
 
-interface Paginated<T> {
-  data: T[];
-  meta?: { page?: number; per_page?: number; total?: number };
+export interface SendDirectMessagePayload {
+  receiverId: string | number;
+  content?: string;
+  file?: File | null;
+  delete_after?: number | null; // seconds
 }
 
-export async function fetchConversations(): Promise<Conversation[]> {
-  const res: AxiosResponse<Conversation[]> = await api.get("/conversations");
-  return res.data;
-}
-
-export async function fetchMessages(
-  conversationId: string,
-  page: number = 1
-): Promise<Paginated<Message>> {
-  const res: AxiosResponse<Paginated<Message>> = await api.get(
-    `/conversations/${conversationId}/messages`,
-    { params: { page } }
-  );
-  return res.data;
-}
-
-export async function sendMessage(
-  payload: SendMessagePayload
-): Promise<Message> {
-  if (payload.attachment) {
+export async function sendDirectMessage(payload: SendDirectMessagePayload): Promise<Message> {
+  const { receiverId, content, file, delete_after } = payload;
+  if (file) {
     const form = new FormData();
-    form.append("content", sanitize(payload.content));
-    form.append("attachment", payload.attachment);
-    const res: AxiosResponse<Message> = await api.post(
-      `/conversations/${payload.conversationId}/messages`,
-      form,
-      {
-        headers: { "Content-Type": "multipart/form-data" },
-      }
-    );
-    return res.data;
-  } else {
-    const res: AxiosResponse<Message> = await api.post(
-      `/conversations/${payload.conversationId}/messages`,
-      {
-        content: sanitize(payload.content),
-      }
-    );
-    return res.data;
+    if (content) form.append("content", content);
+    form.append("file", file);
+    if (delete_after) form.append("delete_after", String(delete_after));
+    const res: AxiosResponse<any> = await api.post(`/messages/${receiverId}`, form, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return { ...res.data.data, localStatus: "sent" };
   }
+  const body: Record<string, any> = {};
+  if (content) body.content = content;
+  if (delete_after) body.delete_after = delete_after;
+  const res: AxiosResponse<any> = await api.post(`/messages/${receiverId}`, body);
+  return { ...res.data.data, localStatus: "sent" };
 }
 
-export async function deleteMessage(
-  conversationId: string,
-  messageId: string
-): Promise<{ success: boolean }> {
-  const res: AxiosResponse<{ success: boolean }> = await api.delete(
-    `/conversations/${conversationId}/messages/${messageId}`
-  );
+export async function deleteMessage(messageId: string | number): Promise<{ message: string }> {
+  const res: AxiosResponse<any> = await api.delete(`/messages/${messageId}`);
   return res.data;
 }

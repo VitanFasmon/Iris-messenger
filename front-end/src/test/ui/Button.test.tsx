@@ -24,6 +24,6 @@ describe("Button component", () => {
   it("applies variant classes correctly", () => {
     const { container } = render(<Button variant="ghost">Ghost</Button>);
     const button = container.querySelector("button");
-    expect(button).toHaveClass("hover:bg-gray-100");
+    expect(button).toHaveClass("hover:bg-accent");
   });
 });

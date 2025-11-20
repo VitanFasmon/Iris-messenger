@@ -32,7 +32,7 @@ export const Dialog: React.FC<DialogProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? "dialog-title" : undefined}
@@ -44,7 +44,7 @@ export const Dialog: React.FC<DialogProps> = ({
       <div
         ref={dialogRef}
         tabIndex={-1}
-        className="bg-white dark:bg-gray-900 rounded-lg shadow w-full max-w-md p-4 space-y-4 focus:outline-none"
+        className="bg-card text-card-foreground rounded-lg shadow-lg border border-border w-full max-w-md p-6 space-y-4 focus:outline-none"
       >
         <div className="flex items-center justify-between">
           {title && (
@@ -55,7 +55,7 @@ export const Dialog: React.FC<DialogProps> = ({
           <button
             onClick={onClose}
             aria-label="Close dialog"
-            className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 rounded"
+            className="text-muted-foreground hover:text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring rounded"
           >
             ✕
           </button>

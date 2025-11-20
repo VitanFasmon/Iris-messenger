@@ -1,11 +1,13 @@
-let accessToken: string | null = null;
+const TOKEN_KEY = 'iris_access_token';
 
 export const setAccessToken = (t: string) => {
-  accessToken = t;
+  localStorage.setItem(TOKEN_KEY, t);
 };
 
-export const getAccessToken = () => accessToken;
+export const getAccessToken = () => {
+  return localStorage.getItem(TOKEN_KEY);
+};
 
 export const clearAccessToken = () => {
-  accessToken = null;
+  localStorage.removeItem(TOKEN_KEY);
 };

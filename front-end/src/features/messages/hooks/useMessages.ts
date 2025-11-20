@@ -1,87 +1,63 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  fetchConversations,
-  fetchMessages,
-  sendMessage,
-  deleteMessage,
-  type Conversation,
-  type Message,
-  type SendMessagePayload,
-} from "../api/messages";
+import { fetchMessages, sendDirectMessage, deleteMessage, type Message } from "../api/messages";
 
-const CONVERSATIONS_KEY = ["conversations"];
-const MESSAGES_KEY = (conversationId: string) => ["messages", conversationId];
+const MESSAGES_KEY = (receiverId: string | number) => ["directMessages", receiverId];
 
-export function useConversations() {
-  return useQuery<Conversation[]>({
-    queryKey: CONVERSATIONS_KEY,
-    queryFn: fetchConversations,
-    staleTime: 15_000,
-    refetchInterval: 60_000,
-  });
-}
-
-export function useMessages(conversationId: string | null) {
-  return useQuery<{ data: Message[] }>({
-    enabled: !!conversationId,
-    queryKey: MESSAGES_KEY(conversationId || ""),
-    queryFn: async () => {
-      const page = await fetchMessages(conversationId!);
-      return { data: page.data };
-    },
+export function useDirectMessages(receiverId: string | number | null) {
+  return useQuery<Message[]>({
+    enabled: receiverId != null,
+    queryKey: receiverId != null ? MESSAGES_KEY(receiverId) : ["directMessages","none"],
+    queryFn: () => fetchMessages(receiverId!),
     staleTime: 5_000,
   });
 }
 
-export function useSendMessage(conversationId: string | null) {
+export function useSendDirectMessage(receiverId: string | number | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: Omit<SendMessagePayload, "conversationId">) =>
-      sendMessage({ conversationId: conversationId!, ...payload }),
-    onMutate: async (variables) => {
-      if (!conversationId) return;
-      await qc.cancelQueries({ queryKey: MESSAGES_KEY(conversationId) });
-      const prev = qc.getQueryData<{ data: Message[] }>(
-        MESSAGES_KEY(conversationId)
-      );
+    mutationFn: (payload: { content?: string; file?: File | null; delete_after?: number | null }) =>
+      sendDirectMessage({ receiverId: receiverId!, ...payload }),
+    onMutate: async (vars) => {
+      if (receiverId == null) return;
+      await qc.cancelQueries({ queryKey: MESSAGES_KEY(receiverId) });
+      const prev = qc.getQueryData<Message[]>(MESSAGES_KEY(receiverId));
       if (prev) {
         const optimistic: Message = {
           id: "optimistic-" + Date.now(),
-          conversation_id: conversationId,
-          sender_id: "me", // replace with actual user id from auth later
-          content: variables.content,
-          created_at: new Date().toISOString(),
-          deleted_at: null,
-          attachment_url: null,
+          sender_id: "me",
+          receiver_id: receiverId!,
+          content: vars.content || null,
+            file_url: null,
+          timestamp: new Date().toISOString(),
+          delete_after: vars.delete_after ?? null,
+          expires_at: null,
+          attachments: [],
+          localStatus: "sending",
         };
-        qc.setQueryData(MESSAGES_KEY(conversationId), {
-          data: [...prev.data, optimistic],
-        });
+        qc.setQueryData<Message[]>(MESSAGES_KEY(receiverId), [...prev, optimistic]);
       }
-      return { prev }; // context
+      return { prev, receiverId };
     },
     onError: (_err, _vars, ctx) => {
-      if (conversationId && ctx?.prev) {
-        qc.setQueryData(MESSAGES_KEY(conversationId), ctx.prev);
+      if (ctx?.receiverId && ctx.prev) {
+        qc.setQueryData(MESSAGES_KEY(ctx.receiverId), ctx.prev);
       }
     },
     onSuccess: () => {
-      if (conversationId) {
-        qc.invalidateQueries({ queryKey: MESSAGES_KEY(conversationId) });
-        qc.invalidateQueries({ queryKey: CONVERSATIONS_KEY });
+      if (receiverId != null) {
+        qc.invalidateQueries({ queryKey: MESSAGES_KEY(receiverId) });
       }
     },
   });
 }
 
-export function useDeleteMessage(conversationId: string | null) {
+export function useDeleteDirectMessage(receiverId: string | number | null) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (messageId: string) =>
-      deleteMessage(conversationId!, messageId),
+    mutationFn: (messageId: string | number) => deleteMessage(messageId),
     onSuccess: () => {
-      if (conversationId) {
-        qc.invalidateQueries({ queryKey: MESSAGES_KEY(conversationId) });
+      if (receiverId != null) {
+        qc.invalidateQueries({ queryKey: MESSAGES_KEY(receiverId) });
       }
     },
   });
