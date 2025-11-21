@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useDirectMessages } from "../hooks/useMessages";
 import { MessageBubble } from "./MessageBubble";
+import { useSession } from "../../auth/hooks/useSession";
 
 interface Props {
   receiverId: string | number | null;
@@ -8,6 +9,7 @@ interface Props {
 
 export const MessageList: React.FC<Props> = ({ receiverId }) => {
   const { data, isLoading, error } = useDirectMessages(receiverId);
+  const { data: user } = useSession();
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -29,9 +31,14 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4">
-      {data?.map((m) => (
-        <MessageBubble key={m.id} message={m} />
-      ))}
+      {data?.map((m) => {
+        const isMine = m.sender_id === user?.id;
+        return (
+          <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
+            <MessageBubble message={m} isMine={isMine} />
+          </div>
+        );
+      })}
       <div ref={bottomRef} />
     </div>
   );

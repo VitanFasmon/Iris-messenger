@@ -17,12 +17,9 @@ export const LoginForm: React.FC<Props> = ({ onSuccess }) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3" aria-label="Login form">
-      <div>
-        <label
-          htmlFor="login-username"
-          className="block text-sm font-medium mb-1"
-        >
+    <form onSubmit={handleSubmit} className="space-y-4" aria-label="Login form">
+      <div className="space-y-2">
+        <label htmlFor="login-username" className="text-emerald-100 text-sm">
           Username
         </label>
         <input
@@ -31,15 +28,12 @@ export const LoginForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setUsername(e.target.value)}
           required
           autoComplete="username"
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded bg-gray-800/50 border border-emerald-600/30 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="your_username"
         />
       </div>
-      <div>
-        <label
-          htmlFor="login-password"
-          className="block text-sm font-medium mb-1"
-        >
+      <div className="space-y-2">
+        <label htmlFor="login-password" className="text-emerald-100 text-sm">
           Password
         </label>
         <input
@@ -49,12 +43,12 @@ export const LoginForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded bg-gray-800/50 border border-emerald-600/30 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="••••••••"
         />
       </div>
       {error && (
-        <p className="text-xs text-red-600" role="alert" aria-live="polite">
+        <p className="text-xs text-red-400" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -62,7 +56,7 @@ export const LoginForm: React.FC<Props> = ({ onSuccess }) => {
         type="submit"
         disabled={loading}
         aria-busy={loading}
-        className="w-full rounded bg-indigo-600 hover:bg-indigo-500 text-white py-2 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="w-full rounded bg-emerald-500 hover:bg-emerald-400 text-gray-900 py-2 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
       >
         {loading ? "Logging in..." : "Login"}
       </button>

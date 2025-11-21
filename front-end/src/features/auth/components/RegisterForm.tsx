@@ -20,14 +20,11 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3"
+      className="space-y-4"
       aria-label="Registration form"
     >
-      <div>
-        <label
-          htmlFor="register-username"
-          className="block text-sm font-medium mb-1"
-        >
+      <div className="space-y-2">
+        <label htmlFor="register-username" className="text-emerald-100 text-sm">
           Username
         </label>
         <input
@@ -36,15 +33,12 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setUsername(e.target.value)}
           required
           autoComplete="username"
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded bg-gray-800/50 border border-emerald-600/30 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="your_username"
         />
       </div>
-      <div>
-        <label
-          htmlFor="register-email"
-          className="block text-sm font-medium mb-1"
-        >
+      <div className="space-y-2">
+        <label htmlFor="register-email" className="text-emerald-100 text-sm">
           Email
         </label>
         <input
@@ -54,15 +48,12 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded bg-gray-800/50 border border-emerald-600/30 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="you@example.com"
         />
       </div>
-      <div>
-        <label
-          htmlFor="register-password"
-          className="block text-sm font-medium mb-1"
-        >
+      <div className="space-y-2">
+        <label htmlFor="register-password" className="text-emerald-100 text-sm">
           Password
         </label>
         <input
@@ -72,12 +63,12 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
           onChange={(e) => setPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className="w-full rounded border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full rounded bg-gray-800/50 border border-emerald-600/30 px-3 py-2 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
           placeholder="••••••••"
         />
       </div>
       {error && (
-        <p className="text-xs text-red-600" role="alert" aria-live="polite">
+        <p className="text-xs text-red-400" role="alert" aria-live="polite">
           {error}
         </p>
       )}
@@ -85,7 +76,7 @@ export const RegisterForm: React.FC<Props> = ({ onSuccess }) => {
         type="submit"
         disabled={loading}
         aria-busy={loading}
-        className="w-full rounded bg-green-600 hover:bg-green-500 text-white py-2 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="w-full rounded bg-emerald-500 hover:bg-emerald-400 text-gray-900 py-2 text-sm font-medium disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
       >
         {loading ? "Registering..." : "Register"}
       </button>

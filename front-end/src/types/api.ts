@@ -37,32 +37,16 @@ export interface FriendRequest {
   created_at: string;
 }
 
-// Rich message API shape (transitional: existing fields + planned expiry/meta fields)
-export interface MessageApi {
+// Deprecated legacy conversation-based message types removed. Use Message from messages/api/messages.ts
+// Keeping minimal placeholder exports to avoid breaking unused imports; will be removed once refactors complete.
+export interface MessageApiDeprecated {
   id: number;
-  sender_id: number;
-  conversation_id: number;
-  content: string | null;
-  attachment_url: string | null;
-  sent_at: string; // ISO timestamp
-  deleted_at?: string | null;
-  delete_after?: number | null; // seconds until auto-delete (optional backend support)
-  expires_at?: string | null; // ISO timestamp after which message should disappear
-  is_deleted?: boolean; // backend flag when removed server-side
 }
+export interface MessageDeprecated extends MessageApiDeprecated {}
 
-// Client-enriched message used in UI layers
-export interface Message extends MessageApi {
-  localStatus?: "sending" | "sent" | "failed";
-  remainingSeconds?: number | null; // derived from expires_at
-}
-
-export interface Conversation {
+// Legacy conversation model removed (backend does not provide conversation abstraction)
+export interface ConversationDeprecated {
   id: number;
-  participants: User[];
-  last_message: MessageApi | null; // keep raw API version for previews
-  unread_count: number;
-  created_at: string;
 }
 
 export interface Pagination<T> {
@@ -80,15 +64,10 @@ export interface ErrorResponse {
 }
 
 // Mapping utilities ---------------------------------------------------------
-export function mapMessageApiToMessage(m: MessageApi): Message {
-  return {
-    ...m,
-    remainingSeconds: computeRemaining(m.expires_at),
-  };
+// No-op utilities retained for backwards compatibility; to delete after full migration.
+export function mapMessageApiToMessage(_m: any): any {
+  return _m;
 }
-
-export function computeRemaining(expires_at?: string | null): number | null {
-  if (!expires_at) return null;
-  const diff = new Date(expires_at).getTime() - Date.now();
-  return diff > 0 ? Math.floor(diff / 1000) : 0;
+export function computeRemaining(_expires_at?: string | null): number | null {
+  return null;
 }

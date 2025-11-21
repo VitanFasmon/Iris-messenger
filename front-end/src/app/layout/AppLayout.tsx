@@ -1,8 +1,11 @@
 import React from "react";
-import { Outlet, Link, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useUiStore } from "../../store/uiStore";
 import { ToastContainer } from "../../ui/Toast";
 import { clearAccessToken } from "../../lib/tokenStore";
+import { MessageCircle, Settings, LogOut } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { useSession } from "../../features/auth/hooks/useSession";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -25,7 +28,7 @@ class ErrorBoundary extends React.Component<
         <div className="p-6">
           <h2 className="text-lg font-semibold mb-2">Something went wrong.</h2>
           <button
-            className="text-sm text-blue-600 underline"
+            className="text-sm text-emerald-500 underline"
             onClick={() => this.setState({ hasError: false })}
           >
             Try again
@@ -40,6 +43,8 @@ class ErrorBoundary extends React.Component<
 export default function AppLayout() {
   const { toastQueue, removeToast, pushToast } = useUiStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { data: user } = useSession();
 
   const handleLogout = () => {
     clearAccessToken();
@@ -48,82 +53,87 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <aside
-        className="w-64 bg-sidebar text-sidebar-foreground border-r border-sidebar-border p-4 flex flex-col gap-2"
-        role="navigation"
-        aria-label="Main navigation"
-      >
-        <div className="px-2 py-3">
-          <h1 className="text-lg font-semibold text-sidebar-primary">
-            Iris Messenger
-          </h1>
-        </div>
-        <nav className="flex-1">
-          <ul role="list" className="flex flex-col gap-1">
-            <li>
-              <Link
-                to="/app"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-              >
-                Chats
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/app/friends"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-              >
-                Friends
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/app/settings"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-              >
-                Settings
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/app/profile"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-              >
-                Profile
-              </Link>
-            </li>
-          </ul>
-        </nav>
-        <div className="border-t border-sidebar-border pt-2">
+    <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="w-full max-w-md h-screen bg-gray-950 shadow-xl flex flex-col">
+        <header className="h-16 flex items-center justify-between px-4 border-b border-emerald-900/30 bg-gray-950">
           <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+            onClick={() => navigate("/app/settings")}
+            className="flex items-center gap-3 group"
+            aria-label="Open profile"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-gray-700 group-hover:border-emerald-500 transition">
+              {user?.profile_picture_url ? (
+                <img
+                  src={`${user.profile_picture_url}?t=${Date.now()}`}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-xs font-medium text-gray-300">
+                  {(user?.username?.[0] || "U").toUpperCase()}
+                </div>
+              )}
+            </div>
+            <span
+              className="text-sm font-semibold text-white tracking-wide max-w-[140px] truncate"
+              title={user?.username || "Guest"}
             >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-            Logout
+              {user?.username || "Guest"}
+            </span>
           </button>
-        </div>
-      </aside>
-      <main className="flex-1">
-        <ErrorBoundary>
-          <Outlet />
-        </ErrorBoundary>
-      </main>
+          <nav className="flex items-center gap-2" aria-label="Primary">
+            {(() => {
+              const chatActive =
+                location.pathname === "/app" ||
+                location.pathname.startsWith("/app/chat");
+              return (
+                <button
+                  onClick={() => navigate("/app")}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
+                    chatActive
+                      ? "bg-emerald-600 text-white"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  }`}
+                  aria-label="Chats"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                </button>
+              );
+            })()}
+            {(() => {
+              const settingsActive =
+                location.pathname.startsWith("/app/settings");
+              return (
+                <button
+                  onClick={() => navigate("/app/settings")}
+                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
+                    settingsActive
+                      ? "bg-emerald-600 text-white"
+                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
+                  }`}
+                  aria-label="Settings & Profile"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+              );
+            })()}
+            <div className="w-px h-6 bg-gray-700 mx-2" aria-hidden="true" />
+            <button
+              onClick={handleLogout}
+              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-600 hover:text-white transition-colors"
+              aria-label="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
+          </nav>
+        </header>
+        <main className="flex-1 flex flex-col overflow-hidden">
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
+        </main>
+      </div>
       <ToastContainer
         toasts={toastQueue.map((t) => ({
           id: t.id,
