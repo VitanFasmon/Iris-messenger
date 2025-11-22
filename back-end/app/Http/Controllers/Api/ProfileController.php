@@ -66,4 +66,47 @@ class ProfileController extends Controller
             'message' => 'Profile picture deleted successfully',
         ]);
     }
+
+    /**
+     * Update basic profile information (username, email)
+     * PATCH /api/profile
+     * Both fields optional; validates uniqueness excluding current user.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth('api')->user();
+
+        $validator = Validator::make($request->all(), [
+            'username' => 'sometimes|string|max:50|unique:users,username,' . $user->id,
+            'email' => 'sometimes|nullable|email|max:100|unique:users,email,' . $user->id,
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([ 'errors' => $validator->errors() ], 422);
+        }
+
+        $dirty = false;
+        if ($request->has('username')) {
+            $user->username = $request->username; $dirty = true;
+        }
+        if ($request->has('email')) {
+            $user->email = $request->email; $dirty = true;
+        }
+
+        if ($dirty) {
+            $user->save();
+        }
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'profile_picture_url' => $user->profile_picture_url,
+                'last_online' => $user->last_online,
+                'created_at' => $user->created_at,
+            ],
+        ]);
+    }
 }

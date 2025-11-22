@@ -35,6 +35,7 @@ Route::middleware('auth:api')->group(function () {
     // Profile routes
     Route::post('profile/picture', [ProfileController::class, 'updateProfilePicture']);
     Route::delete('profile/picture', [ProfileController::class, 'deleteProfilePicture']);
+    Route::patch('profile', [ProfileController::class, 'updateProfile']);
 
     // Friend routes
     Route::get('friends', [FriendController::class, 'index']);
