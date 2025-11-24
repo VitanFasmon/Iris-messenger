@@ -1,10 +1,12 @@
 import React, { useState } from "react";
+import { updateProfile, changePassword } from "../features/profile/api/profile";
 import { useSession } from "../features/auth/hooks/useSession";
-import { ProfileSettings } from "../features/profile/components/ProfileSettings";
+// import { ProfileSettings } from "../features/profile/components/ProfileSettings";
 import { LogOut, User as UserIcon, Mail, Lock, Camera } from "lucide-react";
-import { clearAccessToken } from "../lib/tokenStore";
+import { clearAccessToken, getAccessToken } from "../lib/tokenStore";
 import { useNavigate } from "react-router-dom";
 import { useUiStore } from "../store/uiStore";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function SettingsPage() {
   const { data: user } = useSession();
@@ -12,6 +14,7 @@ export default function SettingsPage() {
   const [changingPassword, setChangingPassword] = useState(false);
   const navigate = useNavigate();
   const { pushToast } = useUiStore();
+  const queryClient = useQueryClient();
 
   // Placeholder local form state (could be replaced with form lib)
   const [usernameDraft, setUsernameDraft] = useState(user?.username || "");
@@ -20,8 +23,28 @@ export default function SettingsPage() {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint
+      await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+          "Content-Type": "application/json",
+        },
+      }).catch(() => {
+        // Ignore errors - we'll clear local state regardless
+      });
+    } catch {
+      // Ignore network errors
+    }
+
+    // Clear local token
     clearAccessToken();
+
+    // Clear React Query cache to immediately remove user data
+    queryClient.clear();
+
     pushToast({ type: "info", message: "Logged out." });
     navigate("/login", { replace: true });
   };
@@ -30,25 +53,39 @@ export default function SettingsPage() {
     ? `${user.profile_picture_url}?t=${Date.now()}`
     : undefined;
 
-  const handleProfileSave = (e: React.FormEvent) => {
+  const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: integrate update endpoint
-    pushToast({ type: "success", message: "Profile saved (demo)." });
-    setEditingProfile(false);
+    try {
+      await updateProfile({ username: usernameDraft, email: emailDraft });
+      pushToast({ type: "success", message: "Profile updated." });
+      setEditingProfile(false);
+      // Optionally: refetch session/user data here
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Profile update failed.";
+      pushToast({ type: "error", message: msg });
+    }
   };
 
-  const handlePasswordUpdate = (e: React.FormEvent) => {
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPw !== confirmPw) {
       pushToast({ type: "error", message: "Passwords do not match." });
       return;
     }
-    // TODO: integrate password update endpoint
-    pushToast({ type: "success", message: "Password updated (demo)." });
-    setChangingPassword(false);
-    setCurrentPw("");
-    setNewPw("");
-    setConfirmPw("");
+    try {
+      await changePassword({
+        current_password: currentPw,
+        new_password: newPw,
+      });
+      pushToast({ type: "success", message: "Password updated." });
+      setChangingPassword(false);
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || "Password update failed.";
+      pushToast({ type: "error", message: msg });
+    }
   };
 
   return (
@@ -240,15 +277,6 @@ export default function SettingsPage() {
               </p>
             )}
           </section>
-
-          {/* Profile Picture (Upload/Delete) using existing component */}
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
-            <h2 className="text-sm font-semibold text-emerald-400 mb-4 tracking-wide">
-              Avatar Management
-            </h2>
-            <ProfileSettings />
-          </section>
-
           {/* Logout Section */}
           <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
             <button

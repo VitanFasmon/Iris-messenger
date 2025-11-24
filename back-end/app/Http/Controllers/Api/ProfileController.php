@@ -27,7 +27,9 @@ class ProfileController extends Controller
         // Delete old profile picture if exists
         if ($user->profile_picture_url) {
             $oldPath = str_replace('/storage/', '', $user->profile_picture_url);
-            Storage::disk('public')->delete($oldPath);
+            if (Storage::disk('public')->exists($oldPath)) {
+                Storage::disk('public')->delete($oldPath);
+            }
         }
 
         // Upload new profile picture
@@ -38,9 +40,16 @@ class ProfileController extends Controller
         $user->profile_picture_url = $profilePictureUrl;
         $user->save();
 
+        // Refresh user to ensure we have latest data
+        $user->refresh();
+
         return response()->json([
-            'message' => 'Profile picture updated successfully',
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
             'profile_picture_url' => $user->profile_picture_url,
+            'last_online' => $user->last_online,
+            'created_at' => $user->created_at,
         ]);
     }
 
@@ -57,13 +66,23 @@ class ProfileController extends Controller
 
         // Delete profile picture file
         $oldPath = str_replace('/storage/', '', $user->profile_picture_url);
-        Storage::disk('public')->delete($oldPath);
+        if (Storage::disk('public')->exists($oldPath)) {
+            Storage::disk('public')->delete($oldPath);
+        }
 
         $user->profile_picture_url = null;
         $user->save();
 
+        // Refresh user to ensure we have latest data
+        $user->refresh();
+
         return response()->json([
-            'message' => 'Profile picture deleted successfully',
+            'id' => $user->id,
+            'username' => $user->username,
+            'email' => $user->email,
+            'profile_picture_url' => $user->profile_picture_url,
+            'last_online' => $user->last_online,
+            'created_at' => $user->created_at,
         ]);
     }
 

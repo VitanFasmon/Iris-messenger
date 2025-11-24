@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useSendDirectMessage } from "../hooks/useMessages";
-import { Paperclip, Image as ImageIcon, Timer, Send } from "lucide-react";
+import {
+  Paperclip,
+  Image as ImageIcon,
+  Timer,
+  Send,
+  Smile,
+} from "lucide-react";
 
 interface Props {
   receiverId: string | number | null;
@@ -12,6 +18,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
   const [showTimer, setShowTimer] = useState(false);
   const send = useSendDirectMessage(receiverId);
+  const [showEmoji, setShowEmoji] = useState(false);
 
   const handleSelectTimer = (seconds: number | null) => {
     setTimerSeconds(seconds);
@@ -30,6 +37,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
     setText("");
     setFile(null);
     setTimerSeconds(null);
+    setShowEmoji(false);
   };
 
   return (
@@ -91,6 +99,38 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
             </ul>
           )}
         </div>
+        {/* Emoji picker */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowEmoji((e) => !e)}
+            className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-800 text-gray-400 hover:text-emerald-400"
+            aria-haspopup="dialog"
+            aria-expanded={showEmoji}
+            aria-label="Emoji picker"
+          >
+            <Smile className="w-4 h-4" />
+          </button>
+          {showEmoji && (
+            <div
+              className="absolute bottom-12 left-0 bg-gray-800 border border-gray-700 rounded-xl shadow-xl p-2 w-56 grid grid-cols-8 gap-1 text-xl"
+              role="dialog"
+              aria-label="Emoji picker"
+            >
+              {EMOJIS.map((em) => (
+                <button
+                  key={em}
+                  type="button"
+                  className="hover:bg-gray-700 rounded"
+                  onClick={() => setText((t) => t + em)}
+                  aria-label={`Insert ${em}`}
+                >
+                  {em}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
       {/* Input pill */}
       <div className="flex-1 flex items-center">
@@ -101,6 +141,12 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
           className="flex-1 rounded-full bg-gray-800/70 border border-gray-700 text-white placeholder:text-gray-500 px-5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
       </div>
+      {/* Active timer banner */}
+      {timerSeconds && (
+        <div className="hidden md:flex items-center text-[10px] font-medium px-2 py-1 rounded-full bg-emerald-600/15 border border-emerald-700 text-emerald-300">
+          Auto-delete: {timerSeconds}s
+        </div>
+      )}
       <button
         type="submit"
         disabled={send.isPending}
@@ -112,3 +158,31 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
     </form>
   );
 };
+
+// Lightweight emoji set (can be swapped for full picker library later)
+const EMOJIS = [
+  "😀",
+  "😅",
+  "😂",
+  "😊",
+  "😍",
+  "😎",
+  "🤔",
+  "😴",
+  "😢",
+  "😭",
+  "😡",
+  "👍",
+  "👎",
+  "🙏",
+  "🔥",
+  "💯",
+  "✨",
+  "🎉",
+  "❤️",
+  "💔",
+  "😇",
+  "🤖",
+  "🧠",
+  "📌",
+];

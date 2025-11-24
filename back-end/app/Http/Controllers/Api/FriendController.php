@@ -169,8 +169,46 @@ class FriendController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $friendship->delete();
+        // Explicitly delete the friendship
+        $deleted = $friendship->delete();
 
-        return response()->json(['message' => 'Friendship removed']);
+        if (!$deleted) {
+            return response()->json(['error' => 'Failed to remove friendship'], 500);
+        }
+
+        return response()->json([
+            'message' => 'Friendship removed',
+            'id' => $id,
+        ]);
+    }
+
+    /**
+     * Get outgoing friend requests (sent by the user)
+     * GET /api/friends/outgoing
+     * Returns pending friend requests initiated by the authenticated user.
+     */
+    public function outgoing()
+    {
+        $user = auth('api')->user();
+
+        $requests = Friend::where('user_id', $user->id)
+            ->where('status', 'pending')
+            ->with('friend')
+            ->get()
+            ->map(function ($friendship) {
+                return [
+                    'id' => $friendship->id,
+                    'user' => [
+                        'id' => $friendship->friend->id,
+                        'username' => $friendship->friend->username,
+                        'email' => $friendship->friend->email,
+                        'profile_picture_url' => $friendship->friend->profile_picture_url,
+                        'last_online' => $friendship->friend->last_online,
+                    ],
+                    'created_at' => $friendship->created_at,
+                ];
+            });
+
+        return response()->json($requests);
     }
 }

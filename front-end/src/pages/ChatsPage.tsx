@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { MessageList } from "../features/messages/components/MessageList";
 import { SendMessageForm } from "../features/messages/components/SendMessageForm";
-import { useParams, useNavigate } from "react-router-dom";
 import {
   useFriends,
   useFriendRequests,
+  useOutgoingFriendRequests,
   useAcceptFriendRequest,
   useRejectOrRemoveFriendship,
 } from "../features/friends/hooks/useFriends";
 import { usePresencePolling } from "../features/presence/hooks/usePresencePolling";
-import { Search, UserPlus, ArrowLeft, Clock, MoreVertical } from "lucide-react";
 import { AddFriendModal } from "../features/friends/components/AddFriendModal";
-import { useDirectMessages } from "../features/messages/hooks/useMessages";
+import { useLastMessages } from "../features/messages/hooks/useLastMessages";
+import { timeAgo } from "../lib/time";
+import { Search, UserPlus, ArrowLeft, Clock, MoreVertical } from "lucide-react";
+import { sanitize } from "../lib/sanitize";
+import { useSession } from "../features/auth/hooks/useSession";
+
+// ChatsPage: lists friends with last message preview; shows active chat when a friend is selected
 
 const ChatsPage: React.FC = () => {
   const [activeReceiverId, setActiveReceiverId] = useState<
@@ -23,8 +29,11 @@ const ChatsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { data: friends } = useFriends();
+  const { data: user } = useSession();
   const { data: presence } = usePresencePolling(20_000);
   const { data: requests } = useFriendRequests();
+  const { data: outgoing } = useOutgoingFriendRequests();
+  const { data: lastMessages } = useLastMessages();
   const accept = useAcceptFriendRequest();
   const removeOrReject = useRejectOrRemoveFriendship();
   const [showMenu, setShowMenu] = useState(false);
@@ -37,18 +46,21 @@ const ChatsPage: React.FC = () => {
 
   const presenceMap = new Map(presence?.map((p) => [p.id, p.status]));
 
-  // Build enhanced & sorted friend list with last message preview.
+  // Aggregate last message data via lastMessages endpoint (no N+1 queries).
+  const lastMap = new Map(
+    (lastMessages || []).map((m) => [String(m.user_id), m])
+  );
   const enhancedFriends = (friends || []).map((f) => {
-    const { data: msgs } = useDirectMessages(f.id);
-    const last = msgs?.[msgs.length - 1];
+    const lm = lastMap.get(String(f.id));
     return {
       ...f,
-      lastMessageText: last?.content || null,
-      lastMessageAt: last?.timestamp
-        ? new Date(last.timestamp).getTime()
+      lastMessageText: lm?.content || null,
+      lastMessageAt: lm?.timestamp
+        ? new Date(lm.timestamp).getTime()
         : f.last_online
         ? new Date(f.last_online).getTime()
         : 0,
+      lastMessageSenderId: lm?.sender_id || null,
     };
   });
 
@@ -87,7 +99,7 @@ const ChatsPage: React.FC = () => {
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="relative w-10 h-10 rounded-full bg-gray-800 overflow-hidden shrink-0 border border-gray-700">
+            <div className="relative w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
               {activeFriend.profile_picture_url ? (
                 <img
                   src={activeFriend.profile_picture_url}
@@ -95,7 +107,7 @@ const ChatsPage: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                <span className="w-full h-full flex items-center justify-center text-xs text-gray-600">
                   {activeFriend.username[0].toUpperCase()}
                 </span>
               )}
@@ -214,17 +226,16 @@ const ChatsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Pending Requests Section */}
-      {requests && requests.length > 0 && (
+      {/* Requests Section (incoming + outgoing) */}
+      {(requests && requests.length > 0) ||
+      (outgoing && outgoing.length > 0) ? (
         <div className="border-b border-gray-800 bg-emerald-950/30 p-4">
           <div className="flex items-center gap-2 mb-3">
             <Clock className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm text-emerald-400">
-              Pending Requests ({requests.length})
-            </h3>
+            <h3 className="text-sm text-emerald-400">Requests</h3>
           </div>
           <div className="space-y-2">
-            {requests.map((r) => (
+            {requests?.map((r) => (
               <div
                 key={r.id}
                 className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg p-3"
@@ -254,9 +265,34 @@ const ChatsPage: React.FC = () => {
                 </div>
               </div>
             ))}
+            {outgoing?.map((o) => (
+              <div
+                key={o.id}
+                className="flex items-center gap-3 bg-gray-800 border border-gray-700 rounded-lg p-3"
+              >
+                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-600">
+                  {o.user.username[0].toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white truncate">{o.user.username}</p>
+                  <p className="text-xs text-gray-400">
+                    Sent {timeAgo(o.created_at)} ago
+                  </p>
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => removeOrReject.mutate(o.id)}
+                    disabled={removeOrReject.isPending}
+                    className="bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-800 text-xs h-8 px-3 rounded"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Friends List */}
       <div className="flex-1 overflow-y-auto">
@@ -266,6 +302,10 @@ const ChatsPage: React.FC = () => {
           <ul>
             {filteredFriends.map((f) => {
               const status = presenceMap.get(f.id) || "offline";
+              const unread =
+                f.lastMessageSenderId &&
+                f.lastMessageSenderId !== user?.id &&
+                String(activeReceiverId) !== String(f.id);
               return (
                 <li key={f.id}>
                   <button
@@ -293,21 +333,26 @@ const ChatsPage: React.FC = () => {
                             : "bg-gray-400"
                         }`}
                       />
+                      {unread && (
+                        <span className="absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center justify-between mb-1">
                         <p className="text-white truncate">{f.username}</p>
                         {f.lastMessageAt > 0 && (
                           <span className="text-xs text-gray-500 ml-2">
-                            {new Date(f.lastMessageAt).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
+                            {timeAgo(f.lastMessageAt)}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-400 truncate">
-                        {f.lastMessageText || "No messages yet"}
+                      <p
+                        className="text-sm text-gray-400 truncate"
+                        title={f.lastMessageText || undefined}
+                      >
+                        {f.lastMessageText
+                          ? sanitize(f.lastMessageText)
+                          : "No messages yet"}
                       </p>
                     </div>
                   </button>

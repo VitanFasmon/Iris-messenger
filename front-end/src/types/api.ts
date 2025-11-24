@@ -37,18 +37,7 @@ export interface FriendRequest {
   created_at: string;
 }
 
-// Deprecated legacy conversation-based message types removed. Use Message from messages/api/messages.ts
-// Keeping minimal placeholder exports to avoid breaking unused imports; will be removed once refactors complete.
-export interface MessageApiDeprecated {
-  id: number;
-}
-export interface MessageDeprecated extends MessageApiDeprecated {}
-
-// Legacy conversation model removed (backend does not provide conversation abstraction)
-export interface ConversationDeprecated {
-  id: number;
-}
-
+// Pagination type for paginated API responses
 export interface Pagination<T> {
   data: T[];
   current_page: number;
@@ -63,11 +52,4 @@ export interface ErrorResponse {
   status?: number;
 }
 
-// Mapping utilities ---------------------------------------------------------
-// No-op utilities retained for backwards compatibility; to delete after full migration.
-export function mapMessageApiToMessage(_m: any): any {
-  return _m;
-}
-export function computeRemaining(_expires_at?: string | null): number | null {
-  return null;
-}
+// (Deprecated types and mapping utilities removed)

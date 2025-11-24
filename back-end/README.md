@@ -111,38 +111,41 @@ Full API documentation is available in [API.md](API.md).
 http://127.0.0.1:8000/api
 ```
 
-### Authentication Endpoints
+### Authentication Endpoints (Updated Nov 2025)
 
-- `POST /auth/register` - Register new user (optional profile picture)
-- `POST /auth/login` - Login and receive JWT token
-- `POST /auth/logout` - Logout (invalidate token)
-- `POST /auth/refresh` - Refresh JWT token
-- `GET /auth/me` - Get authenticated user info
+- `POST /auth/register` – Register (optional profile picture)
+- `POST /auth/login` – Login and receive JWT
+- `POST /auth/logout` – Invalidate token
+- `POST /auth/refresh` – Refresh JWT (updates presence)
+- `POST /auth/password` – Change password (current + new)
+- `GET /me` – Authenticated user info
 
 ### User Endpoints
 
-- `GET /users/search?username={query}` - Search users by username
-- `GET /users/{id}` - Get user profile
+- `GET /users/{username}` – Exact username lookup
+- `GET /users/id/{id}` – User by id
 
 ### Profile Endpoints
 
-- `POST /profile/picture` - Upload/update profile picture (multipart/form-data)
-- `DELETE /profile/picture` - Delete profile picture
+- `PATCH /profile` – Update username/email
+- `POST /profile/picture` – Upload/update profile picture (multipart)
+- `DELETE /profile/picture` – Delete profile picture
 
 ### Friend Endpoints
 
-- `GET /friends` - List all friends
-- `POST /friends` - Send friend request
-- `GET /friends/pending` - List pending requests
-- `PUT /friends/{friendId}/accept` - Accept friend request
-- `DELETE /friends/{friendId}/reject` - Reject friend request
-- `DELETE /friends/{friendId}` - Remove friend
+- `GET /friends` – Accepted friends
+- `GET /friends/pending` – Incoming pending requests
+- `GET /friends/outgoing` – Outgoing requests (sent by user)
+- `POST /friends/{id}` – Send friend request
+- `POST /friends/{id}/accept` – Accept pending request
+- `DELETE /friends/{id}` – Reject pending or remove friendship
 
 ### Message Endpoints
 
-- `GET /messages/{friendId}` - Get conversation with friend
-- `POST /messages` - Send message (with optional file attachment)
-- `DELETE /messages/{messageId}` - Delete message
+- `GET /messages/last` – Aggregated last message per friend (performance)
+- `GET /messages/{receiver_id}` – Full direct thread
+- `POST /messages/{receiver_id}` – Send message/file (optional `delete_after` seconds)
+- `DELETE /messages/{id}` – Delete own message
 
 ## 🧪 Test User Credentials
 
@@ -306,8 +309,8 @@ Developed as part of Web Technologies course, University of Ljubljana, Faculty o
 
 ---
 
-**Last Updated**: January 2025  
-**Version**: 1.0.0  
+**Last Updated**: November 2025  
+**Version**: 1.1.0  
 **Laravel Version**: 12.38.1
 
 ---
@@ -316,13 +319,17 @@ Developed as part of Web Technologies course, University of Ljubljana, Faculty o
 
 This is the Laravel REST API backend for the Iris Messenger application - a private chat platform with timed message deletion and media sharing.
 
-### Features Implemented
+### Features Implemented (Current)
 
 ✅ **JWT Authentication** - Secure token-based auth with login/register/logout  
 ✅ **User Management** - User profiles and search by username  
 ✅ **Friend System** - Send/accept/reject friend requests  
 ✅ **Private Messaging** - One-to-one chat with message history  
-✅ **Timed Deletion** - Auto-delete messages after custom time windows  
+✅ **Timed Deletion** - Auto-delete messages after custom time windows (scheduled cleanup every minute)  
+✅ **Aggregated Previews** - `/messages/last` endpoint for friend list performance  
+✅ **Outgoing Requests** - `/friends/outgoing` to surface sent pending requests  
+✅ **Password Change** - Secure endpoint for updating password  
+✅ **Profile Update** - Patch username/email
 ✅ **File Uploads** - Image, video, audio, and file attachments  
 ✅ **Message Scheduler** - Automated cleanup of expired messages  
 ✅ **CORS Support** - Ready for React frontend integration  

@@ -2,18 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchFriends,
   fetchPendingRequests,
+  fetchOutgoingRequests,
   fetchUserByUsername,
   sendFriendRequestToId,
   acceptFriendRequest,
   deleteFriendship,
   type Friend,
   type PendingFriendRequest,
+  type OutgoingFriendRequest,
   type BackendFriendUser,
 } from "../api/friends";
 
 // Query Keys ---------------------------------------------------------------
 const FRIENDS_KEY = ["friends"];
 const REQUESTS_KEY = ["friendRequests"];
+const OUTGOING_KEY = ["friendRequestsOutgoing"];
 const USER_LOOKUP_KEY = (username: string) => ["userLookup", username];
 
 export function useFriends() {
@@ -34,6 +37,15 @@ export function useFriendRequests() {
   });
 }
 
+export function useOutgoingFriendRequests() {
+  return useQuery<OutgoingFriendRequest[]>({
+    queryKey: OUTGOING_KEY,
+    queryFn: fetchOutgoingRequests,
+    staleTime: 15_000,
+    refetchInterval: 45_000,
+  });
+}
+
 export function useUserLookup(username: string) {
   return useQuery<BackendFriendUser | null>({
     enabled: !!username && username.length > 1,
@@ -46,9 +58,11 @@ export function useUserLookup(username: string) {
 export function useSendFriendRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (targetUserId: string | number) => sendFriendRequestToId(targetUserId),
+    mutationFn: (targetUserId: string | number) =>
+      sendFriendRequestToId(targetUserId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REQUESTS_KEY });
+      qc.invalidateQueries({ queryKey: OUTGOING_KEY });
     },
   });
 }
@@ -56,7 +70,8 @@ export function useSendFriendRequest() {
 export function useAcceptFriendRequest() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (friendshipId: string | number) => acceptFriendRequest(friendshipId),
+    mutationFn: (friendshipId: string | number) =>
+      acceptFriendRequest(friendshipId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REQUESTS_KEY });
       qc.invalidateQueries({ queryKey: FRIENDS_KEY });
@@ -67,9 +82,11 @@ export function useAcceptFriendRequest() {
 export function useRejectOrRemoveFriendship() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (friendshipId: string | number) => deleteFriendship(friendshipId),
+    mutationFn: (friendshipId: string | number) =>
+      deleteFriendship(friendshipId),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: REQUESTS_KEY });
+      qc.invalidateQueries({ queryKey: OUTGOING_KEY });
       qc.invalidateQueries({ queryKey: FRIENDS_KEY });
     },
   });

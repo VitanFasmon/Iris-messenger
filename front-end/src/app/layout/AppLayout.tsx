@@ -2,10 +2,11 @@ import React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useUiStore } from "../../store/uiStore";
 import { ToastContainer } from "../../ui/Toast";
-import { clearAccessToken } from "../../lib/tokenStore";
+import { clearAccessToken, getAccessToken } from "../../lib/tokenStore";
 import { MessageCircle, Settings, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useSession } from "../../features/auth/hooks/useSession";
+import { useQueryClient } from "@tanstack/react-query";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -45,9 +46,30 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: user } = useSession();
+  const queryClient = useQueryClient();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      // Call backend logout endpoint
+      await fetch(`${import.meta.env.VITE_API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${getAccessToken()}`,
+          "Content-Type": "application/json",
+        },
+      }).catch(() => {
+        // Ignore errors - we'll clear local state regardless
+      });
+    } catch {
+      // Ignore network errors
+    }
+
+    // Clear local token
     clearAccessToken();
+
+    // Clear React Query cache to immediately remove user data
+    queryClient.clear();
+
     pushToast({ type: "info", message: "Logged out successfully." });
     navigate("/login", { replace: true });
   };

@@ -2,6 +2,8 @@
 
 React + TypeScript + Vite client for Iris Messenger.
 
+> Updated November 2025: In‑memory token store (sessionStorage fallback), aggregated last message previews (`/messages/last`), outgoing friend requests (`/friends/outgoing`), password change endpoint, sanitized rendering, expiry countdown and unread badge heuristics.
+
 ## Quick Start
 
 ```bash
@@ -87,46 +89,63 @@ src/
 
 See `documents/FRONT_END_PLAN.md` for detailed architecture and implementation plan.
 
-## Backend Endpoints
+## Backend Endpoint Map (Current)
 
-**Auth**
-- `POST /api/register` – Register new user (username, email, password)
-- `POST /api/login` – Login (username/email + password) → returns JWT token
-- `POST /api/logout` – Logout (invalidates token if applicable)
-- `POST /api/refresh` – Refresh JWT token
+| Category | Endpoint | Notes |
+|----------|----------|-------|
+| Auth | `POST /api/auth/register` | Register + optional picture |
+| Auth | `POST /api/auth/login` | Login (username + password) |
+| Auth | `POST /api/auth/logout` | Invalidate token |
+| Auth | `POST /api/auth/refresh` | Refresh JWT, updates presence |
+| Auth | `POST /api/auth/password` | Change password (current,new) |
+| User | `GET /api/me` | Current user profile |
+| User | `GET /api/users/{username}` | Exact username lookup |
+| User | `GET /api/users/id/{id}` | By numeric id |
+| Profile | `PATCH /api/profile` | Update username/email |
+| Profile | `POST /api/profile/picture` | Upload/replace picture (field: `profile_picture`) |
+| Profile | `DELETE /api/profile/picture` | Remove picture |
+| Friends | `GET /api/friends` | Accepted friends |
+| Friends | `GET /api/friends/pending` | Incoming pending requests |
+| Friends | `GET /api/friends/outgoing` | Outgoing requests you sent |
+| Friends | `POST /api/friends/{id}` | Send request to user id |
+| Friends | `POST /api/friends/{id}/accept` | Accept pending request |
+| Friends | `DELETE /api/friends/{id}` | Reject/remove friendship |
+| Messages | `GET /api/messages/last` | Aggregated last message per friend |
+| Messages | `GET /api/messages/{receiver_id}` | Full thread (both directions) |
+| Messages | `POST /api/messages/{receiver_id}` | Send (content/file/delete_after) |
+| Messages | `DELETE /api/messages/{id}` | Sender delete |
 
-**Users**
-- `GET /api/users/{username}` – Lookup single user by exact username
+All protected endpoints require `Authorization: Bearer <token>` header.
 
-**Friends**
-- `GET /api/friends` – List accepted friends
-- `GET /api/friends/pending` – List incoming pending requests
-- `POST /api/friends/{userId}` – Send friend request to user by ID
-- `POST /api/friends/{friendshipId}/accept` – Accept pending request
-- `DELETE /api/friends/{friendshipId}` – Reject pending request or remove friendship
+## Messaging Model & Ephemeral Logic
 
-**Messages** (direct user-to-user)
-- `GET /api/messages/{receiverId}` – Fetch all messages exchanged with given user
-- `POST /api/messages/{receiverId}` – Send message to user (content, file, delete_after)
-- `DELETE /api/messages/{messageId}` – Delete message by id
+- Direct peer to peer; no conversation documents.
+- Friend list previews built from `/messages/last` (eliminates N+1 queries).
+- Optimistic send: bubble enters `sending` state, then `sent` or `failed`.
+- Expiry: backend sets `expires_at` (from `delete_after` seconds). Frontend runs per‑message countdown and hides bubble instantly at zero.
+- Unread heuristic (placeholder): pulse badge if last message sender != me and chat not active.
 
-**Profile**
-- `GET /api/profile/me` – Current user profile
-- `PUT /api/profile` – Update username/email
-- `POST /api/profile/picture` – Upload profile picture (multipart, field: `picture`)
-- `DELETE /api/profile/picture` – Remove profile picture
+## Layout Overview
 
-All endpoints (except auth) require `Authorization: Bearer <token>` header.
+- Top navbar: avatar, brand, navigation, logout.
+- Mobile-first frame (`max-w-[28rem]`) with dark emerald gradient.
+- Friend list → active chat view; modal for adding friends.
+- Accessible buttons with aria labels (timer, emoji, send).
 
-## Messaging Model
+## Security & Sanitization
+- Token kept out of localStorage (memory + optional sessionStorage).
+- `sanitize()` escapes `< >` on message content & previews at render.
+- Rate limiting on send: `throttle:30,1` (backend route middleware).
+- Attachments rendered only after successful upload.
 
-- No backend conversation abstraction; messages are direct peer-to-peer between users.
-- Frontend derives "conversations" from friends list and displays messages for selected receiverId.
-- Optimistic sending: message appears immediately with `localStatus: "sending"`, updates on success/failure.
-- Messages support ephemeral timers (optional `delete_after` and `expires_at` fields) for auto-delete.
+## Presence & Status
+- Derived from `last_online` timestamps: `online <5m`, `recent <60m`, `offline` else.
+- Future: add `away (15-60m)` tier + tooltip with exact relative time.
 
-## Layout
-
-- Top navbar: Avatar (user icon), brand name, chat/friends/settings nav buttons, logout.
-- Mobile-first frame: max-width 28rem, centered viewport, dark emerald gradient theme.
-- Lucide-react icons (MessageCircle, Users, Settings, LogOut) replace emoji for consistency.
+## Planned Enhancements
+- AddFriendModal UI overhaul (use backend outgoing list; richer tiles).
+- Profile/password forms wired to `PATCH /api/profile` & `POST /api/auth/password`.
+- Presence refinement & tooltip.
+- Deprecated type cleanup (`types/api.ts`).
+- Vitest + MSW test suite build‑out.
+- Potential real‑time upgrade (WebSockets) for live updates.

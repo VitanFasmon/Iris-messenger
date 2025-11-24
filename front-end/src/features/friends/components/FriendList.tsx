@@ -65,21 +65,36 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
                   "absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border border-white dark:border-gray-900 " +
                   (status === "online"
                     ? "bg-green-500"
+                    : status === "away"
+                    ? "bg-amber-400"
                     : status === "recent"
                     ? "bg-yellow-500"
                     : "bg-gray-400")
                 }
                 aria-label={`Status: ${status}`}
                 role="status"
+                title={
+                  status === "online"
+                    ? "Online now"
+                    : status === "away"
+                    ? "Away (2–15m)"
+                    : status === "recent"
+                    ? "Recently active (15–60m)"
+                    : "Offline"
+                }
               />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{f.username}</p>
-              {status !== "offline" && (
-                <p className="text-xs text-gray-500">
-                  {status === "online" ? "Online now" : "Recently active"}
-                </p>
-              )}
+              <p className="text-xs text-gray-500">
+                {status === "online"
+                  ? "Online now"
+                  : status === "away"
+                  ? "Away"
+                  : status === "recent"
+                  ? "Recently active"
+                  : "Offline"}
+              </p>
             </div>
             {/* Future: context menu / actions */}
           </li>

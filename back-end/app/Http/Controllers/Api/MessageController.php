@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Attachment;
+use App\Models\Friend;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -87,6 +88,19 @@ class MessageController extends Controller
         $receiver = User::find($receiverId);
         if (!$receiver) {
             return response()->json(['error' => 'Receiver not found'], 404);
+        }
+
+        // Check if users are friends
+        $areFriends = Friend::where(function ($query) use ($user, $receiverId) {
+            $query->where('user_id', $user->id)
+                  ->where('friend_id', $receiverId);
+        })->orWhere(function ($query) use ($user, $receiverId) {
+            $query->where('user_id', $receiverId)
+                  ->where('friend_id', $user->id);
+        })->where('status', 'accepted')->exists();
+
+        if (!$areFriends) {
+            return response()->json(['error' => 'You can only message friends'], 403);
         }
 
         // Calculate expiry timestamp if delete_after is provided
@@ -180,5 +194,65 @@ class MessageController extends Controller
         $message->update(['is_deleted' => true]);
 
         return response()->json(['message' => 'Message deleted successfully']);
+    }
+
+    /**
+     * Get last message for each friend
+     * GET /api/messages/last
+     * Returns array of {user_id, last_message, timestamp, content_preview} for each friend with messages.
+     */
+    public function lastMessages()
+    {
+        $user = auth('api')->user();
+
+        // Get all accepted friendships
+        $friendIds = Friend::where(function ($query) use ($user) {
+            $query->where('user_id', $user->id)
+                  ->orWhere('friend_id', $user->id);
+        })
+        ->where('status', 'accepted')
+        ->with(['user', 'friend'])
+        ->get()
+        ->map(function ($friendship) use ($user) {
+            $friend = $friendship->user_id === $user->id 
+                ? $friendship->friend 
+                : $friendship->user;
+            return $friend->id;
+        });
+
+        $lastMessages = [];
+        foreach ($friendIds as $friendId) {
+            $lastMessage = Message::active()
+                ->where(function ($query) use ($user, $friendId) {
+                    $query->where(function ($q) use ($user, $friendId) {
+                        $q->where('sender_id', $user->id)
+                          ->where('receiver_id', $friendId);
+                    })->orWhere(function ($q) use ($user, $friendId) {
+                        $q->where('sender_id', $friendId)
+                          ->where('receiver_id', $user->id);
+                    });
+                })
+                ->where(function ($query) {
+                    $query->whereNull('expires_at')
+                          ->orWhere('expires_at', '>', now());
+                })
+                ->orderBy('timestamp', 'desc')
+                ->first();
+
+            if ($lastMessage) {
+                $lastMessages[] = [
+                    'user_id' => $friendId,
+                    'message_id' => $lastMessage->id,
+                    'sender_id' => $lastMessage->sender_id,
+                    'content' => $lastMessage->content,
+                    'file_url' => $lastMessage->file_url,
+                    'timestamp' => $lastMessage->timestamp,
+                    'delete_after' => $lastMessage->delete_after,
+                    'expires_at' => $lastMessage->expires_at,
+                ];
+            }
+        }
+
+        return response()->json($lastMessages);
     }
 }
