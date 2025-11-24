@@ -7,6 +7,7 @@ import { clearAccessToken, getAccessToken } from "../lib/tokenStore";
 import { useNavigate } from "react-router-dom";
 import { useUiStore } from "../store/uiStore";
 import { useQueryClient } from "@tanstack/react-query";
+import { getFullUrl } from "../lib/urls";
 
 export default function SettingsPage() {
   const { data: user } = useSession();
@@ -50,7 +51,7 @@ export default function SettingsPage() {
   };
 
   const avatarUrl = user?.profile_picture_url
-    ? `${user.profile_picture_url}?t=${Date.now()}`
+    ? `${getFullUrl(user.profile_picture_url)}?t=${Date.now()}`
     : undefined;
 
   const handleProfileSave = async (e: React.FormEvent) => {
@@ -59,7 +60,8 @@ export default function SettingsPage() {
       await updateProfile({ username: usernameDraft, email: emailDraft });
       pushToast({ type: "success", message: "Profile updated." });
       setEditingProfile(false);
-      // Optionally: refetch session/user data here
+      // Refetch session data to update the UI immediately
+      await queryClient.invalidateQueries({ queryKey: ["session"] });
     } catch (err: any) {
       const msg = err?.response?.data?.message || "Profile update failed.";
       pushToast({ type: "error", message: msg });

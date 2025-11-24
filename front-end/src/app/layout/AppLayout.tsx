@@ -7,6 +7,7 @@ import { MessageCircle, Settings, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useSession } from "../../features/auth/hooks/useSession";
 import { useQueryClient } from "@tanstack/react-query";
+import { getFullUrl } from "../../lib/urls";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -86,7 +87,9 @@ export default function AppLayout() {
             <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-gray-700 group-hover:border-emerald-500 transition">
               {user?.profile_picture_url ? (
                 <img
-                  src={`${user.profile_picture_url}?t=${Date.now()}`}
+                  src={`${getFullUrl(
+                    user.profile_picture_url
+                  )}?t=${Date.now()}`}
                   alt="avatar"
                   className="w-full h-full object-cover"
                   loading="lazy"

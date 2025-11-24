@@ -126,8 +126,12 @@ class ProfileTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJsonStructure([
-                'message',
+                'id',
+                'username',
+                'email',
                 'profile_picture_url',
+                'last_online',
+                'created_at',
             ]);
 
         $alice->refresh();
@@ -181,8 +185,16 @@ class ProfileTest extends TestCase
             ->deleteJson('/api/profile/picture');
 
         $response->assertStatus(200)
+            ->assertJsonStructure([
+                'id',
+                'username',
+                'email',
+                'profile_picture_url',
+                'last_online',
+                'created_at',
+            ])
             ->assertJson([
-                'message' => 'Profile picture deleted successfully',
+                'profile_picture_url' => null,
             ]);
 
         $alice->refresh();
@@ -370,5 +382,147 @@ class ProfileTest extends TestCase
         $response = $this->actingAsUser($bob)->getJson('/api/users/alice');
         $response->assertStatus(200);
         $this->assertEquals('https://example.com/profile.jpg', $response->json('profile_picture_url'));
+    }
+
+    /** @test */
+    public function profile_picture_upload_returns_full_user_object()
+    {
+        Storage::fake('public');
+
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $file = UploadedFile::fake()->image('profile.jpg', 200, 200);
+
+        $response = $this->actingAsUser($alice)
+            ->postJson('/api/profile/picture', [
+                'profile_picture' => $file,
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'id',
+                'username',
+                'email',
+                'profile_picture_url',
+                'last_online',
+                'created_at',
+            ])
+            ->assertJson([
+                'id' => $alice->id,
+                'username' => 'alice',
+                'email' => 'alice@example.com',
+            ]);
+
+        $this->assertNotNull($response->json('profile_picture_url'));
+    }
+
+    /** @test */
+    public function profile_picture_delete_returns_full_user_object()
+    {
+        Storage::fake('public');
+
+        $alice = $this->createUser('alice', 'alice@example.com');
+        
+        // Upload profile picture first
+        $file = UploadedFile::fake()->image('profile.jpg', 200, 200);
+        $path = $file->store('profile_pictures', 'public');
+        $alice->profile_picture_url = Storage::url($path);
+        $alice->save();
+
+        $response = $this->actingAsUser($alice)
+            ->deleteJson('/api/profile/picture');
+
+        $response->assertStatus(200)
+            ->assertJsonStructure([
+                'id',
+                'username',
+                'email',
+                'profile_picture_url',
+                'last_online',
+                'created_at',
+            ])
+            ->assertJson([
+                'id' => $alice->id,
+                'username' => 'alice',
+                'email' => 'alice@example.com',
+                'profile_picture_url' => null,
+            ]);
+    }
+
+    /** @test */
+    public function user_can_update_username()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+
+        $response = $this->actingAsUser($alice)
+            ->patchJson('/api/profile', [
+                'username' => 'alice_updated',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Profile updated successfully',
+                'user' => [
+                    'username' => 'alice_updated',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $alice->id,
+            'username' => 'alice_updated',
+        ]);
+    }
+
+    /** @test */
+    public function user_can_update_email()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+
+        $response = $this->actingAsUser($alice)
+            ->patchJson('/api/profile', [
+                'email' => 'alice_new@example.com',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'message' => 'Profile updated successfully',
+                'user' => [
+                    'email' => 'alice_new@example.com',
+                ],
+            ]);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $alice->id,
+            'email' => 'alice_new@example.com',
+        ]);
+    }
+
+    /** @test */
+    public function username_must_be_unique()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        $response = $this->actingAsUser($bob)
+            ->patchJson('/api/profile', [
+                'username' => 'alice',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['username']);
+    }
+
+    /** @test */
+    public function email_must_be_unique()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        $response = $this->actingAsUser($bob)
+            ->patchJson('/api/profile', [
+                'email' => 'alice@example.com',
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 }

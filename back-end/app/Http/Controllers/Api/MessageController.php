@@ -92,11 +92,13 @@ class MessageController extends Controller
 
         // Check if users are friends
         $areFriends = Friend::where(function ($query) use ($user, $receiverId) {
-            $query->where('user_id', $user->id)
+            $query->where(function ($q) use ($user, $receiverId) {
+                $q->where('user_id', $user->id)
                   ->where('friend_id', $receiverId);
-        })->orWhere(function ($query) use ($user, $receiverId) {
-            $query->where('user_id', $receiverId)
+            })->orWhere(function ($q) use ($user, $receiverId) {
+                $q->where('user_id', $receiverId)
                   ->where('friend_id', $user->id);
+            });
         })->where('status', 'accepted')->exists();
 
         if (!$areFriends) {

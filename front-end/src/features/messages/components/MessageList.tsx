@@ -1,5 +1,8 @@
 import React, { useEffect, useRef } from "react";
-import { useDirectMessages } from "../hooks/useMessages";
+import {
+  useDirectMessages,
+  useDeleteDirectMessage,
+} from "../hooks/useMessages";
 import { MessageBubble } from "./MessageBubble";
 import { useSession } from "../../auth/hooks/useSession";
 
@@ -10,6 +13,7 @@ interface Props {
 export const MessageList: React.FC<Props> = ({ receiverId }) => {
   const { data, isLoading, error } = useDirectMessages(receiverId);
   const { data: user } = useSession();
+  const deleteMessage = useDeleteDirectMessage(receiverId);
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -29,13 +33,24 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
       <div className="p-4 text-sm text-red-600">Failed to load messages.</div>
     );
 
+  const handleDelete = (messageId: string | number) => {
+    deleteMessage.mutate(messageId);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4">
       {data?.map((m) => {
         const isMine = m.sender_id === user?.id;
         return (
-          <div key={m.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
-            <MessageBubble message={m} isMine={isMine} />
+          <div
+            key={m.id}
+            className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+          >
+            <MessageBubble
+              message={m}
+              isMine={isMine}
+              onDelete={handleDelete}
+            />
           </div>
         );
       })}

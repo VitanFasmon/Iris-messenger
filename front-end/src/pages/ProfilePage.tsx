@@ -1,6 +1,7 @@
 import React from "react";
 import { ProfileSettings } from "../features/profile/components/ProfileSettings";
 import { useSession } from "../features/auth/hooks/useSession";
+import { getFullUrl } from "../lib/urls";
 
 const ProfilePage: React.FC = () => {
   const { data: user } = useSession();
@@ -13,7 +14,9 @@ const ProfilePage: React.FC = () => {
             <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-800 border border-gray-700 shadow-lg">
               {user?.profile_picture_url ? (
                 <img
-                  src={`${user.profile_picture_url}?t=${Date.now()}`}
+                  src={`${getFullUrl(
+                    user.profile_picture_url
+                  )}?t=${Date.now()}`}
                   alt="profile avatar"
                   className="w-full h-full object-cover"
                 />

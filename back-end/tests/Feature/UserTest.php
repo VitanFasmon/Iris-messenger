@@ -103,4 +103,58 @@ class UserTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    /** @test */
+    public function user_cannot_search_for_themselves()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+
+        $response = $this->actingAsUser($alice)
+            ->getJson('/api/users/alice');
+
+        $response->assertStatus(400)
+            ->assertJson(['error' => 'Cannot search for yourself']);
+    }
+
+    /** @test */
+    public function user_cannot_search_for_existing_friend()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create accepted friendship
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
+        $response = $this->actingAsUser($alice)
+            ->getJson('/api/users/bob');
+
+        $response->assertStatus(400)
+            ->assertJsonFragment(['error' => 'Already connected'])
+            ->assertJsonFragment(['status' => 'accepted']);
+    }
+
+    /** @test */
+    public function user_cannot_search_for_pending_friend_request()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create pending friendship
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAsUser($alice)
+            ->getJson('/api/users/bob');
+
+        $response->assertStatus(400)
+            ->assertJsonFragment(['error' => 'Already connected'])
+            ->assertJsonFragment(['status' => 'pending']);
+    }
 }

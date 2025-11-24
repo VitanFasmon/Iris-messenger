@@ -2,6 +2,7 @@ import React from "react";
 import { useFriends } from "../hooks/useFriends";
 import { usePresencePolling } from "../../presence/hooks/usePresencePolling";
 import { useNavigate } from "react-router-dom";
+import { getFullUrl } from "../../../lib/urls";
 
 interface Props {
   compact?: boolean;
@@ -48,7 +49,7 @@ export const FriendList: React.FC<Props> = ({ compact }) => {
             <div className="relative w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
               {f.profile_picture_url ? (
                 <img
-                  src={f.profile_picture_url}
+                  src={getFullUrl(f.profile_picture_url) || ""}
                   alt={`${f.username}'s profile picture`}
                   className="w-full h-full object-cover"
                 />

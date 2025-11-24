@@ -5,6 +5,7 @@ import { Button } from "../../../ui/Button";
 import { Avatar } from "../../../ui/Avatar";
 import { Skeleton } from "../../../ui/Skeleton";
 import { useUiStore } from "../../../store/uiStore";
+import { getFullUrl } from "../../../lib/urls";
 
 export const ProfileSettings: React.FC = () => {
   const { data: user, status } = useSession();
@@ -68,7 +69,7 @@ export const ProfileSettings: React.FC = () => {
 
   // Cache busting: append timestamp to avatar URL
   const avatarUrl = user?.profile_picture_url
-    ? `${user.profile_picture_url}?t=${Date.now()}`
+    ? `${getFullUrl(user.profile_picture_url)}?t=${Date.now()}`
     : undefined;
 
   if (status === "pending") {

@@ -269,4 +269,62 @@ class FriendTest extends TestCase
         $this->assertEquals('bob', $aliceFriends[0]['username']);
         $this->assertEquals('alice', $bobFriends[0]['username']);
     }
+
+    /** @test */
+    public function user_can_view_outgoing_friend_requests()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+        $charlie = $this->createUser('charlie', 'charlie@example.com');
+
+        // Alice sent requests to Bob and Charlie
+        Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'pending',
+        ]);
+
+        Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $charlie->id,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAsUser($alice)
+            ->getJson('/api/friends/outgoing');
+
+        $response->assertStatus(200)
+            ->assertJsonCount(2);
+
+        $outgoing = $response->json();
+        $usernames = array_column(array_column($outgoing, 'user'), 'username');
+        $this->assertContains('bob', $usernames);
+        $this->assertContains('charlie', $usernames);
+    }
+
+    /** @test */
+    public function friend_removal_actually_deletes_from_database()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        $friendship = Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
+        $friendshipId = $friendship->id;
+
+        // Remove friend
+        $response = $this->actingAsUser($alice)
+            ->deleteJson("/api/friends/{$friendshipId}");
+
+        $response->assertStatus(200)
+            ->assertJson(['id' => $friendshipId]);
+
+        // Verify it's actually deleted
+        $this->assertDatabaseMissing('friends', ['id' => $friendshipId]);
+        $this->assertNull(Friend::find($friendshipId));
+    }
 }

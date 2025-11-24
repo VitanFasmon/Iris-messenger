@@ -16,6 +16,7 @@ import { timeAgo } from "../lib/time";
 import { Search, UserPlus, ArrowLeft, Clock, MoreVertical } from "lucide-react";
 import { sanitize } from "../lib/sanitize";
 import { useSession } from "../features/auth/hooks/useSession";
+import { getFullUrl } from "../lib/urls";
 
 // ChatsPage: lists friends with last message preview; shows active chat when a friend is selected
 
@@ -102,7 +103,7 @@ const ChatsPage: React.FC = () => {
             <div className="relative w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
               {activeFriend.profile_picture_url ? (
                 <img
-                  src={activeFriend.profile_picture_url}
+                  src={getFullUrl(activeFriend.profile_picture_url) || ""}
                   alt={`${activeFriend.username}'s avatar`}
                   className="w-full h-full object-cover"
                 />
@@ -315,7 +316,7 @@ const ChatsPage: React.FC = () => {
                     <div className="relative w-12 h-12 rounded-full bg-gray-200 overflow-hidden shrink-0">
                       {f.profile_picture_url ? (
                         <img
-                          src={f.profile_picture_url}
+                          src={getFullUrl(f.profile_picture_url) || ""}
                           alt={`${f.username}'s avatar`}
                           className="w-full h-full object-cover"
                         />

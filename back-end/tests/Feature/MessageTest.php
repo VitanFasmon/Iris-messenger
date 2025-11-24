@@ -35,6 +35,13 @@ class MessageTest extends TestCase
         $alice = $this->createUser('alice', 'alice@example.com');
         $bob = $this->createUser('bob', 'bob@example.com');
 
+        // Create friendship first
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
         $response = $this->actingAsUser($alice)
             ->postJson("/api/messages/{$bob->id}", [
                 'content' => 'Hello Bob!',
@@ -66,6 +73,13 @@ class MessageTest extends TestCase
         $alice = $this->createUser('alice', 'alice@example.com');
         $bob = $this->createUser('bob', 'bob@example.com');
 
+        // Create friendship first
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
         $response = $this->actingAsUser($alice)
             ->postJson("/api/messages/{$bob->id}", [
                 'content' => 'This message will expire',
@@ -87,6 +101,13 @@ class MessageTest extends TestCase
 
         $alice = $this->createUser('alice', 'alice@example.com');
         $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create friendship first
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
 
         $file = UploadedFile::fake()->image('photo.jpg');
 
@@ -242,6 +263,13 @@ class MessageTest extends TestCase
         $alice = $this->createUser('alice', 'alice@example.com');
         $bob = $this->createUser('bob', 'bob@example.com');
 
+        // Create friendship first
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
         // Create a file larger than 10MB (10240 KB)
         $file = UploadedFile::fake()->create('large.pdf', 11000);
 
@@ -261,6 +289,13 @@ class MessageTest extends TestCase
 
         $alice = $this->createUser('alice', 'alice@example.com');
         $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create friendship first
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
 
         // Message with only content
         $response1 = $this->actingAsUser($alice)
@@ -363,5 +398,70 @@ class MessageTest extends TestCase
         $this->assertEquals('First message', $messages[0]['content']);
         $this->assertEquals('Second message', $messages[1]['content']);
         $this->assertEquals('Third message', $messages[2]['content']);
+    }
+
+    /** @test */
+    public function user_cannot_send_message_to_non_friend()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        // No friendship exists
+        $response = $this->actingAsUser($alice)
+            ->postJson("/api/messages/{$bob->id}", [
+                'content' => 'Hello!',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error' => 'You can only message friends']);
+    }
+
+    /** @test */
+    public function user_can_send_message_to_accepted_friend()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create accepted friendship
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'accepted',
+        ]);
+
+        $response = $this->actingAsUser($alice)
+            ->postJson("/api/messages/{$bob->id}", [
+                'content' => 'Hello friend!',
+            ]);
+
+        $response->assertStatus(201);
+
+        $this->assertDatabaseHas('messages', [
+            'sender_id' => $alice->id,
+            'receiver_id' => $bob->id,
+            'content' => 'Hello friend!',
+        ]);
+    }
+
+    /** @test */
+    public function user_cannot_send_message_to_pending_friend()
+    {
+        $alice = $this->createUser('alice', 'alice@example.com');
+        $bob = $this->createUser('bob', 'bob@example.com');
+
+        // Create pending friendship
+        \App\Models\Friend::create([
+            'user_id' => $alice->id,
+            'friend_id' => $bob->id,
+            'status' => 'pending',
+        ]);
+
+        $response = $this->actingAsUser($alice)
+            ->postJson("/api/messages/{$bob->id}", [
+                'content' => 'Hello!',
+            ]);
+
+        $response->assertStatus(403)
+            ->assertJson(['error' => 'You can only message friends']);
     }
 }
