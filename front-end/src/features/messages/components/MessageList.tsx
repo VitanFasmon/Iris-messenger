@@ -38,7 +38,7 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4">
+    <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4 lg:p-6">
       {data?.map((m) => {
         const isMine = m.sender_id === user?.id;
         return (

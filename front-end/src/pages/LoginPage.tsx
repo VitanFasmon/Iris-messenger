@@ -16,8 +16,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-950 p-8">
-      <div className="w-full max-w-sm">
+    <div className="h-screen flex flex-col items-center justify-center bg-linear-to-br from-emerald-900 via-teal-900 to-emerald-950 p-4 sm:p-8">
+      <div className="w-full max-w-sm lg:max-w-md">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 rounded-full bg-emerald-400 flex items-center justify-center shadow-lg shadow-emerald-500/50 mb-4">

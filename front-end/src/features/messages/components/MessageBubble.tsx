@@ -67,10 +67,10 @@ export const MessageBubble: React.FC<Props> = ({
 
   return (
     <>
-      <div className="flex flex-col gap-1 max-w-[75%]">
+      <div className="flex flex-col gap-1 max-w-[75%] lg:max-w-[60%]">
         <div
           className={
-            "rounded-2xl px-4 py-2 text-sm " +
+            "rounded-2xl px-4 py-2 text-sm lg:text-base " +
             (status === "failed"
               ? "bg-red-600/20 border border-red-500 text-white"
               : isMine

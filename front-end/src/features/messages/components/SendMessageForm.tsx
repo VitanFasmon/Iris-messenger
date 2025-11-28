@@ -65,7 +65,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-col gap-2 p-3 bg-emerald-950/30 backdrop-blur border-t border-gray-800"
+      className="flex flex-col gap-2 p-3 lg:p-4 bg-emerald-950/30 backdrop-blur border-t border-gray-800"
       aria-label="Send message form"
     >
       {/* Image Preview */}

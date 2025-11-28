@@ -76,9 +76,9 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="w-full max-w-md h-screen bg-gray-900 shadow-xl flex flex-col">
-        <header className="h-16 flex items-center justify-between px-4 border-b border-emerald-900/30 bg-emerald-950/30">
+    <div className="min-h-screen flex items-center justify-center bg-gray-300">
+      <div className="w-full  h-screen bg-gray-900 shadow-xl flex flex-col">
+        <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-emerald-900/30 bg-emerald-950/30">
           <button
             onClick={() => navigate("/app/settings")}
             className="flex items-center gap-3 group"
@@ -101,7 +101,7 @@ export default function AppLayout() {
               )}
             </div>
             <span
-              className="text-sm font-semibold text-white tracking-wide max-w-[140px] truncate"
+              className="text-sm font-semibold text-white tracking-wide max-w-[140px] lg:max-w-[200px] truncate"
               title={user?.username || "Guest"}
             >
               {user?.username || "Guest"}

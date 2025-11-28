@@ -141,12 +141,12 @@ export default function SettingsPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-900">
-      <div className="flex items-center justify-start w-full p-4">
+      <div className="flex items-center justify-start w-full p-4 lg:p-6">
         <h2 className="text-lg font-semibold text-white">Settings & Profile</h2>
       </div>
-      <div className=" pb-8 flex flex-col items-center gap-10">
+      <div className="pb-8 flex flex-col items-center gap-10 lg:px-6">
         {/* Avatar & Basic Info */}
-        <div className="flex flex-col items-center gap-4 bg-gray-900 border-t border-gray-800 p-5 w-full">
+        <div className="flex flex-col items-center gap-4 bg-gray-900 border-t border-gray-800 p-5 w-full lg:max-w-2xl lg:rounded-xl lg:border lg:shadow-lg">
           <div className="relative p-4">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-800 border border-gray-700 shadow-lg">
               {avatarUrl ? (
@@ -188,9 +188,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="w-full flex flex-col gap-8">
+        <div className="w-full flex flex-col gap-8 lg:max-w-2xl">
           {/* Profile Information Section */}
-          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg">
+          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-white text-sm font-medium">
                 <UserIcon className="w-4 h-4 text-gray-400" /> Profile
@@ -266,7 +266,7 @@ export default function SettingsPage() {
           </section>
 
           {/* Security Section */}
-          <section className="bg-gray-900 p-5 ">
+          <section className="bg-gray-900 p-5 border-l-0 border-r-0 border-t border-b border-gray-800 lg:rounded-xl lg:border-l lg:border-r lg:shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-white text-sm font-medium">
                 <Lock className="w-4 h-4 text-gray-400" /> Security
@@ -336,7 +336,7 @@ export default function SettingsPage() {
             )}
           </section>
           {/* Logout Section */}
-          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg">
+          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r">
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded py-2 transition"
