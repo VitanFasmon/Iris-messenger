@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import type { Message } from "../api/messages";
 import { sanitize } from "../../../lib/sanitize";
 import { getFullUrl } from "../../../lib/urls";
-import { MoreVertical } from "lucide-react";
 
 interface Props {
   message: Message;
@@ -26,6 +25,14 @@ export const MessageBubble: React.FC<Props> = ({
   const isImage =
     !!fullFileUrl &&
     /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fullFileUrl.split("?")[0]);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    if (!showMenu) return;
+    const handleClickOutside = () => setShowMenu(false);
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showMenu]);
 
   // Expiry countdown -------------------------------------------------------
   const [remaining, setRemaining] = useState<number | null>(() => {
@@ -60,10 +67,10 @@ export const MessageBubble: React.FC<Props> = ({
 
   return (
     <>
-      <div className="relative group">
+      <div className="flex flex-col gap-1 max-w-[75%]">
         <div
           className={
-            "max-w-[75%] rounded-2xl px-4 py-2 text-sm " +
+            "rounded-2xl px-4 py-2 text-sm " +
             (status === "failed"
               ? "bg-red-600/20 border border-red-500 text-white"
               : isMine
@@ -101,7 +108,7 @@ export const MessageBubble: React.FC<Props> = ({
                 Attachment
               </a>
             ))}
-          <div className="mt-1 px-2 flex items-center justify-end gap-2">
+          <div className="mt-1 px-2 flex items-center gap-2">
             <span className="text-xs text-gray-300">{timeLabel}</span>
             {remaining !== null && remaining > 0 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-900/40 text-emerald-300 border border-gray-700">
@@ -119,29 +126,46 @@ export const MessageBubble: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Three-dot menu for own messages */}
+        {/* Unsend button below message */}
         {isMine &&
           onDelete &&
           !message.id.toString().startsWith("optimistic-") && (
-            <div className="absolute top-2 -right-8 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="relative self-end">
               <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-700 text-gray-400 hover:text-white"
-                aria-label="Message options"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMenu(!showMenu);
+                }}
+                className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
               >
-                <MoreVertical className="w-4 h-4" />
+                Unsend
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-32 z-10">
-                  <button
-                    onClick={() => {
-                      onDelete(message.id);
-                      setShowMenu(false);
-                    }}
-                    className="w-full text-left px-3 py-2 text-sm text-red-300 hover:bg-gray-700 rounded-lg"
-                  >
-                    Unsend
-                  </button>
+                <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-40 z-10 p-2">
+                  <p className="text-xs text-gray-400 mb-2">
+                    Delete this message?
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                      }}
+                      className="flex-1 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 rounded"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(message.id);
+                        setShowMenu(false);
+                      }}
+                      className="flex-1 px-2 py-1 text-xs text-red-300 hover:bg-red-900/30 rounded"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

@@ -77,8 +77,8 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div className="w-full max-w-md h-screen bg-gray-950 shadow-xl flex flex-col">
-        <header className="h-16 flex items-center justify-between px-4 border-b border-emerald-900/30 bg-gray-950">
+      <div className="w-full max-w-md h-screen bg-gray-900 shadow-xl flex flex-col">
+        <header className="h-16 flex items-center justify-between px-4 border-b border-emerald-900/30 bg-emerald-950/30">
           <button
             onClick={() => navigate("/app/settings")}
             className="flex items-center gap-3 group"

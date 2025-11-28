@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { updateProfile, changePassword } from "../features/profile/api/profile";
 import { useSession } from "../features/auth/hooks/useSession";
+import { useProfilePicture } from "../features/profile/hooks/useProfilePicture";
 // import { ProfileSettings } from "../features/profile/components/ProfileSettings";
 import { LogOut, User as UserIcon, Mail, Lock, Camera } from "lucide-react";
 import { clearAccessToken, getAccessToken } from "../lib/tokenStore";
@@ -16,6 +17,8 @@ export default function SettingsPage() {
   const navigate = useNavigate();
   const { pushToast } = useUiStore();
   const queryClient = useQueryClient();
+  const { upload } = useProfilePicture();
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // Placeholder local form state (could be replaced with form lib)
   const [usernameDraft, setUsernameDraft] = useState(user?.username || "");
@@ -54,6 +57,52 @@ export default function SettingsPage() {
     ? `${getFullUrl(user.profile_picture_url)}?t=${Date.now()}`
     : undefined;
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      // Client-side validation
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (!file.type.startsWith("image/")) {
+        pushToast({
+          type: "error",
+          message: "Please select a valid image file.",
+        });
+        return;
+      }
+      if (file.size > maxSize) {
+        pushToast({
+          type: "error",
+          message: "Image too large. Max size is 5MB.",
+        });
+        return;
+      }
+      const formData = new FormData();
+      formData.append("profile_picture", file);
+      upload.mutate(formData, {
+        onSuccess: () => {
+          pushToast({ type: "success", message: "Profile picture updated." });
+          queryClient.invalidateQueries({ queryKey: ["session"] });
+        },
+        onError: (err: any) => {
+          const serverMsg = err?.response?.data?.message;
+          const firstFieldError = (() => {
+            const errors = err?.response?.data?.errors;
+            if (errors && typeof errors === "object") {
+              const first = Object.values(errors)[0] as string[] | undefined;
+              return first?.[0];
+            }
+            return undefined;
+          })();
+          pushToast({
+            type: "error",
+            message:
+              serverMsg || firstFieldError || err?.message || "Upload failed.",
+          });
+        },
+      });
+    }
+  };
+
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -91,11 +140,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-950">
-      <div className="px-6 py-8 flex flex-col items-center gap-10">
+    <div className="flex-1 overflow-y-auto bg-gray-900">
+      <div className="flex items-center justify-start w-full p-4">
+        <h2 className="text-lg font-semibold text-white">Settings & Profile</h2>
+      </div>
+      <div className=" pb-8 flex flex-col items-center gap-10">
         {/* Avatar & Basic Info */}
-        <div className="flex flex-col items-center gap-4">
-          <div className="relative">
+        <div className="flex flex-col items-center gap-4 bg-gray-900 border-t border-gray-800 p-5 w-full">
+          <div className="relative p-4">
             <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-800 border border-gray-700 shadow-lg">
               {avatarUrl ? (
                 <img
@@ -109,15 +161,19 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileRef}
+              style={{ display: "none" }}
+              onChange={handleAvatarUpload}
+              aria-label="Upload profile picture file"
+            />
             <button
-              onClick={() => {
-                const input = document.querySelector<HTMLInputElement>(
-                  'input[type="file"][accept^="image/"]'
-                );
-                input?.click();
-              }}
+              onClick={() => fileRef.current?.click()}
               aria-label="Change profile picture"
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-600 text-gray-900 flex items-center justify-center shadow-md hover:bg-emerald-500 transition"
+              disabled={upload.status === "pending"}
+              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-600 text-gray-900 flex items-center justify-center shadow-md hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Camera className="w-4 h-4" />
             </button>
@@ -134,7 +190,7 @@ export default function SettingsPage() {
 
         <div className="w-full flex flex-col gap-8">
           {/* Profile Information Section */}
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
+          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-white text-sm font-medium">
                 <UserIcon className="w-4 h-4 text-gray-400" /> Profile
@@ -210,7 +266,7 @@ export default function SettingsPage() {
           </section>
 
           {/* Security Section */}
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
+          <section className="bg-gray-900 p-5 ">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2 text-white text-sm font-medium">
                 <Lock className="w-4 h-4 text-gray-400" /> Security
@@ -280,7 +336,7 @@ export default function SettingsPage() {
             )}
           </section>
           {/* Logout Section */}
-          <section className="bg-gray-900 border border-gray-800 rounded-xl p-5 shadow-lg">
+          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg">
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded py-2 transition"

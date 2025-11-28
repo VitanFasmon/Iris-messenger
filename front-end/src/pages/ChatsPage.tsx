@@ -89,7 +89,7 @@ const ChatsPage: React.FC = () => {
 
   if (activeFriend && activeReceiverId) {
     return (
-      <div className="flex flex-col h-full bg-gray-950">
+      <div className="flex flex-col h-full bg-gray-900">
         {/* Chat Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-800 relative">
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ const ChatsPage: React.FC = () => {
             )}
           </div>
           {confirmRemove && (
-            <div className="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-30">
+            <div className="absolute top-24 inset-0 bg-gray-900/80 flex items-center justify-center z-30">
               <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 w-64 space-y-4">
                 <p className="text-sm text-white">
                   Remove{" "}
