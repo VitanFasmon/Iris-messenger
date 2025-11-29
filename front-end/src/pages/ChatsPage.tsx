@@ -323,7 +323,7 @@ const ChatsPage: React.FC = () => {
                 </div>
                 <span
                   className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 ${
-                    colors.bg.primary
+                    colors.border.primary
                   } ${
                     activeStatus === "online"
                       ? "bg-green-500"
@@ -564,23 +564,27 @@ const ChatsPage: React.FC = () => {
                     className={`w-full flex items-center gap-3 p-4 ${colors.card.hover} border-b ${colors.border.primary}`}
                   >
                     <div
-                      className={`relative w-12 h-12 rounded-full ${colors.avatar.bg} overflow-hidden shrink-0`}
+                      className={`relative w-12 h-12 rounded-full ${colors.avatar.bg} shrink-0`}
                     >
-                      {f.profile_picture_url ? (
-                        <img
-                          src={getFullUrl(f.profile_picture_url) || ""}
-                          alt={`${f.username}'s avatar`}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span
-                          className={`w-full h-full flex items-center justify-center text-xs ${colors.avatar.text}`}
-                        >
-                          {f.username[0].toUpperCase()}
-                        </span>
-                      )}
+                      <div className="w-full h-full rounded-full overflow-hidden">
+                        {f.profile_picture_url ? (
+                          <img
+                            src={getFullUrl(f.profile_picture_url) || ""}
+                            alt={`${f.username}'s avatar`}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span
+                            className={`w-full h-full flex items-center justify-center text-xs ${colors.avatar.text}`}
+                          >
+                            {f.username[0].toUpperCase()}
+                          </span>
+                        )}
+                      </div>
                       <span
-                        className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-gray-900 ${
+                        className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 ${
+                          colors.border.primary
+                        } ${
                           status === "online"
                             ? "bg-green-500"
                             : status === "recent"
