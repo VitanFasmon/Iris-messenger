@@ -340,6 +340,27 @@ content=Check out this photo!
 delete_after=600
 ```
 
+Response (truncated):
+```json
+{
+  "message": "Message sent successfully",
+  "data": {
+    "id": 123,
+    "sender_id": 1,
+    "receiver_id": 2,
+    "content": "Check out this photo!",
+    "file_url": "/storage/uploads/abc123xyz.jpg",
+    "filename": "image.jpg",
+    "timestamp": "2025-11-29T12:34:56.000000Z",
+    "delete_after": 600,
+    "expires_at": "2025-11-29T12:44:56.000000Z",
+    "attachments": [
+      { "id": 1, "file_type": "image", "file_url": "/storage/uploads/abc123xyz.jpg", "filename": "image.jpg" }
+    ]
+  }
+}
+```
+
 #### Delete Message
 ```bash
 DELETE /api/messages/{message_id}
@@ -347,6 +368,15 @@ Authorization: Bearer {token}
 ```
 
 Only the sender can delete their own messages.
+
+#### Download Attachment (keeps original filename)
+```bash
+GET /api/messages/download/{message_id}
+Authorization: Bearer {token}
+```
+
+Downloads the attachment of a specific message using its original filename.
+Returns 404 if the message has no file.
 
 ## Timed Message Deletion
 
@@ -416,6 +446,34 @@ php artisan storage:link
 Files will be accessible at:
 - Messages: `http://127.0.0.1:8000/storage/uploads/...`
 - Profiles: `http://127.0.0.1:8000/storage/profile_pictures/...`
+
+### Allowed File Types
+Uploads are validated by extension for broad compatibility. Examples of allowed extensions:
+
+- Images: `jpg, jpeg, png, gif, webp, bmp, svg, ico`
+- Documents: `pdf, doc, docx, xls, xlsx, ppt, pptx, txt, rtf, odt, ods, odp, csv`
+- Archives: `zip, rar, 7z, tar, gz`
+- Media: `mp3, mp4, avi, mov, wmv, flv, mkv, wav, ogg, webm`
+- Code/Text: `json, xml, html, css, js, ts, jsx, tsx, php, py, java, c, cpp, h, hpp, cs, rb, go, rs, swift, kt, sh, bat, ps1, sql, md, yaml, yml, toml, ini`
+- eBooks: `epub, mobi, azw, azw3`
+
+Note: Allowing executable extensions (e.g., `.php`, `.sh`) can be risky in misconfigured environments. Files are stored under `storage/app/public` and served as static assets, but for maximum safety consider storing outside the web root and always serving via the download endpoint.
+
+### PHP Upload Limits
+If uploads fail unexpectedly, verify PHP limits:
+
+```bash
+php -i | grep -E "upload_max_filesize|post_max_size"
+```
+
+Recommended `.ini` settings for up to 10 MB uploads:
+
+```
+upload_max_filesize = 10M
+post_max_size = 12M
+```
+
+Then clear caches / restart PHP-FPM as needed.
 
 ## CORS Configuration
 

@@ -65,6 +65,13 @@ php artisan db:seed
 php artisan storage:link
 ```
 
+If file uploads fail or are unexpectedly small, increase PHP limits (and restart PHP-FPM/web server if applicable):
+
+```
+upload_max_filesize = 10M
+post_max_size = 12M
+```
+
 ### 5. Start Development Server
 
 ```bash
@@ -146,6 +153,7 @@ http://127.0.0.1:8000/api
 - `GET /messages/{receiver_id}` – Full direct thread
 - `POST /messages/{receiver_id}` – Send message/file (optional `delete_after` seconds)
 - `DELETE /messages/{id}` – Delete own message
+- `GET /messages/download/{id}` – Download attachment with original filename
 
 ## 🧪 Test User Credentials
 
@@ -393,6 +401,8 @@ php artisan storage:link
 ```
 
 Files are stored in `storage/app/public/uploads/` and accessible at `/storage/uploads/...`
+
+Attachments are served via a download endpoint to preserve the original filename and enforce authorization. Consider keeping executable types disabled in production unless you exclusively serve files through the download endpoint.
 
 ### Tech Stack
 
