@@ -28,6 +28,39 @@ export const MessageBubble: React.FC<Props> = ({
     !!fullFileUrl &&
     /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(fullFileUrl.split("?")[0]);
 
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE_URL}/api/messages/download/${
+          message.id
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Download failed");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = message.filename || "attachment";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download error:", error);
+    }
+  };
+
   // Close menu when clicking outside
   useEffect(() => {
     if (!showMenu) return;
@@ -108,14 +141,15 @@ export const MessageBubble: React.FC<Props> = ({
                 </button>
               </div>
             ) : (
-              <a
-                href={fullFileUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block text-xs text-emerald-300 mt-1 truncate underline"
+              <button
+                onClick={handleDownload}
+                className="mt-1 inline-flex items-center w-full max-w-full text-left text-xs text-emerald-300 underline hover:text-emerald-200"
+                title={message.filename || "Attachment"}
               >
-                Attachment
-              </a>
+                <span className="truncate max-w-full">
+                  {message.filename || "Attachment"}
+                </span>
+              </button>
             ))}
           <div className="mt-1 px-2 flex items-center gap-2">
             <span className={`text-xs ${colors.message.timestamp}`}>

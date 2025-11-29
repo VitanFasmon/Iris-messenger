@@ -5,6 +5,7 @@ export interface Attachment {
   id: string | number;
   file_type: string;
   file_url: string;
+  filename?: string | null;
 }
 
 export interface Message {
@@ -13,6 +14,7 @@ export interface Message {
   receiver_id: string | number;
   content: string | null;
   file_url: string | null;
+  filename?: string | null;
   timestamp: string; // ISO
   delete_after?: number | null;
   expires_at?: string | null;
@@ -36,6 +38,7 @@ export interface LastMessageEntry {
   sender_id: string | number;
   content: string | null;
   file_url: string | null;
+  filename?: string | null;
   timestamp: string;
   delete_after?: number | null;
   expires_at?: string | null;

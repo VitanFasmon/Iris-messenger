@@ -52,4 +52,5 @@ Route::middleware('auth:api')->group(function () {
     Route::get('messages/{receiver_id}', [MessageController::class, 'index']);
     Route::post('messages/{receiver_id}', [MessageController::class, 'store'])->middleware('throttle:30,1');
     Route::delete('messages/{id}', [MessageController::class, 'destroy']);
+    Route::get('messages/download/{id}', [MessageController::class, 'download']);
 });

@@ -15,6 +15,7 @@ class Attachment extends Model
         'message_id',
         'file_type',
         'file_url',
+        'filename',
     ];
 
     /**

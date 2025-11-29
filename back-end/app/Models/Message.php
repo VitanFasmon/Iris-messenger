@@ -17,6 +17,7 @@ class Message extends Model
         'receiver_id',
         'content',
         'file_url',
+        'filename',
         'delete_after',
         'expires_at',
         'is_deleted',

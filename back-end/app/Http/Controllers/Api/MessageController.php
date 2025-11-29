@@ -51,6 +51,7 @@ class MessageController extends Controller
                 'receiver_id' => $message->receiver_id,
                 'content' => $message->content,
                 'file_url' => $message->file_url,
+                'filename' => $message->filename,
                 'timestamp' => $message->timestamp,
                 'delete_after' => $message->delete_after,
                 'expires_at' => $message->expires_at,
@@ -59,6 +60,7 @@ class MessageController extends Controller
                         'id' => $att->id,
                         'file_type' => $att->file_type,
                         'file_url' => $att->file_url,
+                        'filename' => $att->filename,
                     ];
                 }),
             ];
@@ -74,9 +76,28 @@ class MessageController extends Controller
     {
         $user = auth('api')->user();
 
+        // Validate with extensions instead of mimes for broader compatibility
         $validator = Validator::make($request->all(), [
             'content' => 'nullable|string',
-            'file' => 'nullable|file|max:10240', // 10MB max
+            'file' => [
+                'nullable',
+                'file',
+                'max:10240', // 10MB max
+                // Use extensions instead of mimes to allow any file type by extension
+                'extensions:' .
+                    // Images
+                    'jpg,jpeg,png,gif,webp,bmp,svg,ico,' .
+                    // Documents
+                    'pdf,doc,docx,xls,xlsx,ppt,pptx,txt,rtf,odt,ods,odp,csv,' .
+                    // Archives
+                    'zip,rar,7z,tar,gz,' .
+                    // Media
+                    'mp3,mp4,avi,mov,wmv,flv,mkv,wav,ogg,webm,' .
+                    // Code & Text
+                    'json,xml,html,css,js,ts,jsx,tsx,php,py,java,c,cpp,h,hpp,cs,rb,go,rs,swift,kt,sh,bat,ps1,sql,md,yaml,yml,toml,ini,' .
+                    // eBooks & Other
+                    'epub,mobi,azw,azw3'
+            ],
             'delete_after' => 'nullable|integer|min:1', // seconds
         ]);
 
@@ -114,8 +135,10 @@ class MessageController extends Controller
         // Handle file upload
         $fileUrl = null;
         $fileType = null;
+        $filename = null;
         if ($request->hasFile('file')) {
             $file = $request->file('file');
+            $filename = $file->getClientOriginalName();
             $path = $file->store('uploads', 'public');
             $fileUrl = Storage::url($path);
 
@@ -137,6 +160,7 @@ class MessageController extends Controller
             'receiver_id' => $receiverId,
             'content' => $request->content,
             'file_url' => $fileUrl,
+            'filename' => $filename,
             'delete_after' => $request->delete_after,
             'expires_at' => $expiresAt,
             'is_deleted' => false,
@@ -148,6 +172,7 @@ class MessageController extends Controller
                 'message_id' => $message->id,
                 'file_type' => $fileType,
                 'file_url' => $fileUrl,
+                'filename' => $filename,
             ]);
         }
 
@@ -161,6 +186,7 @@ class MessageController extends Controller
                 'receiver_id' => $message->receiver_id,
                 'content' => $message->content,
                 'file_url' => $message->file_url,
+                'filename' => $message->filename,
                 'timestamp' => $message->timestamp,
                 'delete_after' => $message->delete_after,
                 'expires_at' => $message->expires_at,
@@ -169,6 +195,7 @@ class MessageController extends Controller
                         'id' => $att->id,
                         'file_type' => $att->file_type,
                         'file_url' => $att->file_url,
+                        'filename' => $att->filename,
                     ];
                 }),
             ],
@@ -196,6 +223,41 @@ class MessageController extends Controller
         $message->update(['is_deleted' => true]);
 
         return response()->json(['message' => 'Message deleted successfully']);
+    }
+
+    /**
+     * Download a file attachment with original filename
+     */
+    public function download($id)
+    {
+        $user = auth('api')->user();
+        $message = Message::find($id);
+
+        if (!$message) {
+            return response()->json(['error' => 'Message not found'], 404);
+        }
+
+        // Check if user is sender or receiver
+        if ($message->sender_id !== $user->id && $message->receiver_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if (!$message->file_url) {
+            return response()->json(['error' => 'No file attached'], 404);
+        }
+
+        // Get the file path from storage (remove /storage prefix if present)
+        $filePath = str_replace('/storage/', '', $message->file_url);
+        $fullPath = storage_path('app/public/' . $filePath);
+
+        if (!file_exists($fullPath)) {
+            return response()->json(['error' => 'File not found'], 404);
+        }
+
+        // Use original filename or fall back to the stored filename
+        $downloadName = $message->filename ?? basename($fullPath);
+
+        return response()->download($fullPath, $downloadName);
     }
 
     /**
@@ -248,6 +310,7 @@ class MessageController extends Controller
                     'sender_id' => $lastMessage->sender_id,
                     'content' => $lastMessage->content,
                     'file_url' => $lastMessage->file_url,
+                    'filename' => $lastMessage->filename,
                     'timestamp' => $lastMessage->timestamp,
                     'delete_after' => $lastMessage->delete_after,
                     'expires_at' => $lastMessage->expires_at,
