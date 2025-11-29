@@ -1,6 +1,12 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 import {
   fetchMessages,
+  fetchMessagesPage,
   sendDirectMessage,
   deleteMessage,
   type Message,
@@ -18,8 +24,36 @@ export function useDirectMessages(receiverId: string | number | null) {
       receiverId != null
         ? MESSAGES_KEY(receiverId)
         : ["directMessages", "none"],
-    queryFn: () => fetchMessages(receiverId!),
+    queryFn: () => fetchMessages(receiverId!, { limit: 50 }),
     staleTime: 5_000,
+  });
+}
+
+const INFINITE_MESSAGES_KEY = (receiverId: string | number) => [
+  "directMessagesInfinite",
+  receiverId,
+];
+
+export function useInfiniteDirectMessages(
+  receiverId: string | number | null,
+  pageSize: number = 30
+) {
+  return useInfiniteQuery<Message[]>({
+    enabled: receiverId != null,
+    queryKey:
+      receiverId != null
+        ? INFINITE_MESSAGES_KEY(receiverId)
+        : ["directMessagesInfinite", "none"],
+    queryFn: ({ pageParam }) =>
+      fetchMessagesPage(receiverId!, pageParam as string | undefined, pageSize),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || lastPage.length === 0) return undefined;
+      // Pages are returned ascending; oldest is index 0
+      const oldest = lastPage[0];
+      // Heuristic: if we got a full page, assume there may be more
+      return lastPage.length >= pageSize ? oldest.timestamp : undefined;
+    },
   });
 }
 
@@ -66,6 +100,7 @@ export function useSendDirectMessage(
     onSuccess: () => {
       if (receiverId != null) {
         qc.invalidateQueries({ queryKey: MESSAGES_KEY(receiverId) });
+        qc.invalidateQueries({ queryKey: INFINITE_MESSAGES_KEY(receiverId) });
       }
     },
   });
@@ -78,6 +113,7 @@ export function useDeleteDirectMessage(receiverId: string | number | null) {
     onSuccess: () => {
       if (receiverId != null) {
         qc.invalidateQueries({ queryKey: MESSAGES_KEY(receiverId) });
+        qc.invalidateQueries({ queryKey: INFINITE_MESSAGES_KEY(receiverId) });
       }
     },
   });

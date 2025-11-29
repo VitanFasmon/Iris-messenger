@@ -25,10 +25,24 @@ export interface Message {
 
 // Fetch messages exchanged with given receiver (friend user id)
 export async function fetchMessages(
-  receiverId: string | number
+  receiverId: string | number,
+  opts?: { before?: string; limit?: number }
 ): Promise<Message[]> {
-  const res: AxiosResponse<any[]> = await api.get(`/messages/${receiverId}`);
+  const params: Record<string, any> = {};
+  if (opts?.before) params.before = opts.before;
+  if (opts?.limit) params.limit = opts.limit;
+  const res: AxiosResponse<any[]> = await api.get(`/messages/${receiverId}`, {
+    params,
+  });
   return res.data.map((m) => ({ ...m, localStatus: "sent" }));
+}
+
+export async function fetchMessagesPage(
+  receiverId: string | number,
+  before?: string,
+  limit: number = 30
+): Promise<Message[]> {
+  return fetchMessages(receiverId, { before, limit });
 }
 
 // Last messages aggregation (backend endpoint) ----------------------------

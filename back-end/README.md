@@ -10,7 +10,7 @@ A secure, ephemeral messaging API built with Laravel 12, featuring JWT authentic
 - **Ephemeral Messages** - Messages with automatic expiration (24h, 7d, 30d, or permanent)
 - **File Attachments** - Upload files with messages (images, documents, etc.)
 - **User Presence** - Automatic "last online" tracking with 5-minute rate limiting
-- **Comprehensive Testing** - 65 feature tests with 100% endpoint coverage
+- **Comprehensive Testing** - 79 feature tests with 100% endpoint coverage
 
 ## 🛠️ Tech Stack
 
@@ -106,7 +106,7 @@ Then restart the server (Ctrl+C and rerun `php artisan serve`).
 php artisan test
 ```
 
-Expected output: **65 tests passing**
+Expected output: **79 tests passing**
 
 ## 📚 API Documentation
 
@@ -150,7 +150,7 @@ http://127.0.0.1:8000/api
 ### Message Endpoints
 
 - `GET /messages/last` – Aggregated last message per friend (performance)
-- `GET /messages/{receiver_id}` – Full direct thread
+- `GET /messages/{receiver_id}` – Full direct thread (supports `limit` and `before` for pagination; results ordered ascending)
 - `POST /messages/{receiver_id}` – Send message/file (optional `delete_after` seconds)
 - `DELETE /messages/{id}` – Delete own message
 - `GET /messages/download/{id}` – Download attachment with original filename
@@ -402,7 +402,7 @@ php artisan storage:link
 
 Files are stored in `storage/app/public/uploads/` and accessible at `/storage/uploads/...`
 
-Attachments are served via a download endpoint to preserve the original filename and enforce authorization. Consider keeping executable types disabled in production unless you exclusively serve files through the download endpoint.
+Attachments are served via a download endpoint to preserve the original filename and enforce authorization. Consider keeping executable types disabled in production unless you exclusively serve files through the download endpoint. Uploads are validated by extension for broad compatibility; see API.md for the allowed extensions list.
 
 ### Tech Stack
 

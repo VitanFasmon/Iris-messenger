@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import {
-  useDirectMessages,
+  useInfiniteDirectMessages,
   useDeleteDirectMessage,
 } from "../hooks/useMessages";
 import { MessageBubble } from "./MessageBubble";
@@ -13,14 +13,27 @@ interface Props {
 
 export const MessageList: React.FC<Props> = ({ receiverId }) => {
   const { colors } = useTheme();
-  const { data, isLoading, error } = useDirectMessages(receiverId);
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    isFetchingNextPage,
+    hasNextPage,
+  } = useInfiniteDirectMessages(receiverId, 30);
   const { data: user } = useSession();
   const deleteMessage = useDeleteDirectMessage(receiverId);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const topRef = useRef<HTMLDivElement | null>(null);
+
+  const messages = useMemo(() => {
+    const pagesData = data?.pages || [];
+    return pagesData.flat();
+  }, [data]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [data?.length]);
+  }, [messages.length]);
 
   if (!receiverId)
     return (
@@ -45,7 +58,19 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
 
   return (
     <div className="flex flex-col h-full overflow-y-auto space-y-2 p-4 lg:p-6">
-      {data?.map((m) => {
+      <div ref={topRef} />
+      {hasNextPage && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className={`text-xs px-3 py-1 rounded ${colors.bg.hover} ${colors.text.secondary} border ${colors.border.secondary}`}
+          >
+            {isFetchingNextPage ? "Loading…" : "Load older"}
+          </button>
+        </div>
+      )}
+      {messages.map((m) => {
         const isMine = m.sender_id === user?.id;
         return (
           <div

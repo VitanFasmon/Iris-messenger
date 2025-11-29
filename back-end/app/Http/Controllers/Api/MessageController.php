@@ -26,25 +26,40 @@ class MessageController extends Controller
             return response()->json(['error' => 'User not found'], 404);
         }
 
-        // Get all messages between these two users (both directions)
-        $messages = Message::active()
-        ->where(function ($query) use ($user, $receiverId) {
-            $query->where(function ($q) use ($user, $receiverId) {
-                $q->where('sender_id', $user->id)
-                  ->where('receiver_id', $receiverId);
-            })->orWhere(function ($q) use ($user, $receiverId) {
-                $q->where('sender_id', $receiverId)
-                  ->where('receiver_id', $user->id);
+        // Pagination: optional `before` (ISO datetime) and `limit` (default 30, max 100)
+        $limit = (int) request()->query('limit', 30);
+        $limit = max(1, min($limit, 100));
+        $before = request()->query('before');
+
+        $query = Message::active()
+            ->where(function ($query) use ($user, $receiverId) {
+                $query->where(function ($q) use ($user, $receiverId) {
+                    $q->where('sender_id', $user->id)
+                      ->where('receiver_id', $receiverId);
+                })->orWhere(function ($q) use ($user, $receiverId) {
+                    $q->where('sender_id', $receiverId)
+                      ->where('receiver_id', $user->id);
+                });
+            })
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                      ->orWhere('expires_at', '>', now());
             });
-        })
-        ->where(function ($query) {
-            $query->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
-        })
-        ->with('attachments')
-        ->orderBy('timestamp', 'asc')
-        ->get()
-        ->map(function ($message) {
+
+        if ($before) {
+            $beforeTs = strtotime($before);
+            if ($beforeTs !== false) {
+                $query->where('timestamp', '<', date('Y-m-d H:i:s', $beforeTs));
+            }
+        }
+
+        $rows = $query->with('attachments')
+            ->orderBy('timestamp', 'desc')
+            ->orderBy('id', 'desc') // stable ordering when timestamp is NULL or equal
+            ->limit($limit)
+            ->get();
+
+        $messages = $rows->reverse()->values()->map(function ($message) {
             return [
                 'id' => $message->id,
                 'sender_id' => $message->sender_id,
@@ -269,54 +284,40 @@ class MessageController extends Controller
     {
         $user = auth('api')->user();
 
-        // Get all accepted friendships
-        $friendIds = Friend::where(function ($query) use ($user) {
-            $query->where('user_id', $user->id)
-                  ->orWhere('friend_id', $user->id);
-        })
-        ->where('status', 'accepted')
-        ->with(['user', 'friend'])
-        ->get()
-        ->map(function ($friendship) use ($user) {
-            $friend = $friendship->user_id === $user->id 
-                ? $friendship->friend 
-                : $friendship->user;
-            return $friend->id;
-        });
+        // Optimized: single-query last message per friend using window function
+        $uid = $user->id;
+        $sql = "
+            SELECT id, sender_id, receiver_id, content, file_url, filename, timestamp, delete_after, expires_at, other_id
+            FROM (
+                SELECT m.*,
+                    (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END) AS other_id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END)
+                        ORDER BY m.timestamp DESC
+                    ) as rn
+                FROM messages m
+                WHERE (m.sender_id = ? OR m.receiver_id = ?)
+                  AND m.is_deleted = 0
+                  AND (m.expires_at IS NULL OR m.expires_at > NOW())
+            ) t
+            WHERE rn = 1
+        ";
 
-        $lastMessages = [];
-        foreach ($friendIds as $friendId) {
-            $lastMessage = Message::active()
-                ->where(function ($query) use ($user, $friendId) {
-                    $query->where(function ($q) use ($user, $friendId) {
-                        $q->where('sender_id', $user->id)
-                          ->where('receiver_id', $friendId);
-                    })->orWhere(function ($q) use ($user, $friendId) {
-                        $q->where('sender_id', $friendId)
-                          ->where('receiver_id', $user->id);
-                    });
-                })
-                ->where(function ($query) {
-                    $query->whereNull('expires_at')
-                          ->orWhere('expires_at', '>', now());
-                })
-                ->orderBy('timestamp', 'desc')
-                ->first();
+        $rows = \Illuminate\Support\Facades\DB::select($sql, [$uid, $uid, $uid, $uid]);
 
-            if ($lastMessage) {
-                $lastMessages[] = [
-                    'user_id' => $friendId,
-                    'message_id' => $lastMessage->id,
-                    'sender_id' => $lastMessage->sender_id,
-                    'content' => $lastMessage->content,
-                    'file_url' => $lastMessage->file_url,
-                    'filename' => $lastMessage->filename,
-                    'timestamp' => $lastMessage->timestamp,
-                    'delete_after' => $lastMessage->delete_after,
-                    'expires_at' => $lastMessage->expires_at,
-                ];
-            }
-        }
+        $lastMessages = array_map(function ($r) {
+            return [
+                'user_id' => $r->other_id,
+                'message_id' => $r->id,
+                'sender_id' => $r->sender_id,
+                'content' => $r->content,
+                'file_url' => $r->file_url,
+                'filename' => $r->filename,
+                'timestamp' => $r->timestamp,
+                'delete_after' => $r->delete_after,
+                'expires_at' => $r->expires_at,
+            ];
+        }, $rows);
 
         return response()->json($lastMessages);
     }

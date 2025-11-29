@@ -50,13 +50,15 @@ Direct user‑to‑user messaging (no group abstraction) backed by a `messages` 
 | Friends | `POST /api/friends/{id}/accept` | Accept pending request |
 | Friends | `DELETE /api/friends/{id}` | Reject or remove friendship |
 | Messages | `GET /api/messages/last` | Aggregated last message per friend |
-| Messages | `GET /api/messages/{receiver_id}` | Bidirectional thread |
+| Messages | `GET /api/messages/{receiver_id}` | Bidirectional thread; supports `limit` + `before` (ascending) |
 | Messages | `POST /api/messages/{receiver_id}` | Send message/file (optional `delete_after`) |
 | Messages | `DELETE /api/messages/{id}` | Sender delete |
+| Messages | `GET /api/messages/download/{id}` | Download attachment (original filename) |
 
 ## Installation
 
 ### Backend
+
 ```bash
 cd back-end
 cp .env.example .env
@@ -67,44 +69,59 @@ php artisan storage:link
 php artisan serve
 ```
 
+Backend docs and tests:
+
+- Full API reference: `back-end/API.md`
+- Run backend tests: `cd back-end && php artisan test`
+
 ### Frontend
+
 ```bash
 cd front-end
 npm install
 npm run dev
 ```
+
 Frontend dev server defaults to `http://localhost:5173` (Vite). Configure CORS via `FRONTEND_URL` in backend `.env`.
 
 ## Message Expiry
+
 - Server sets `expires_at` based on `delete_after` seconds.
 - Scheduled command (`messages:delete-expired`) runs every minute.
 - Frontend hides bubbles once countdown hits zero without waiting for refetch.
 
 ## Security
+
 - Access token kept only in memory + sessionStorage fallback (no persistent XSS surface).
 - Server rate‑limits message posting (`throttle:30,1`).
 - Sanitization applied on render for message content and last message previews.
 - File uploads validated (size/type) by Laravel.
 
 ## Presence Model
+
 Derived client‑side from `last_online`:
+
 - online < 5m
 - recent < 60m
 - offline otherwise (future: away tier refinement).
 
 ## Testing (Planned Frontend)
+
 Vitest + Testing Library + MSW. Initial suite will cover: auth flow, friend list skeleton -> data, optimistic message send, expiry countdown behaviour.
 
 ## Development Scripts
+
 - Backend tests: `php artisan test`
 - Frontend tests: `npm test`
 - Frontend type check: `tsc -b`
 - Lint: `npm run lint`
 
 ## Discrepancy Matrix
+
 See `docs/DISCREPANCY_MATRIX.md` for remaining gaps vs plan & Figma.
 
 ## Next Steps
+
 1. Refine AddFriendModal (use backend outgoing requests; improved layout)
 2. Profile/password form wiring in frontend
 3. Presence status refinement (add 'away')
@@ -113,6 +130,7 @@ See `docs/DISCREPANCY_MATRIX.md` for remaining gaps vs plan & Figma.
 6. Websocket/real‑time phase (future)
 
 ## License
+
 Academic project – all rights reserved.
 
-_Last updated: 2025-11-23_
+Last updated: 2025-11-23

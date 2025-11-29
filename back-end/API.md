@@ -310,7 +310,22 @@ GET /api/messages/{receiver_id}
 Authorization: Bearer {token}
 ```
 
-Returns all messages between you and the specified user (both directions).
+Returns all messages between you and the specified user (both directions), ordered ascending by `timestamp`.
+
+Optional query parameters for pagination:
+
+- `limit` (number, default 30, max 100): number of messages to return
+- `before` (ISO 8601 datetime, e.g. `2025-11-29T12:00:00.000Z`): return messages older than this timestamp
+
+Example:
+
+```bash
+GET /api/messages/2?limit=30&before=2025-11-29T12:00:00.000Z
+```
+
+Notes:
+- When `before` is omitted, the latest page is returned but the response is still ordered ascending for rendering.
+- Use this with frontend infinite loading by passing the oldest message `timestamp` as the next `before` value.
 
 #### Send Message
 ```bash
@@ -377,6 +392,31 @@ Authorization: Bearer {token}
 
 Downloads the attachment of a specific message using its original filename.
 Returns 404 if the message has no file.
+
+#### Last Messages (per friend)
+```bash
+GET /api/messages/last
+Authorization: Bearer {token}
+```
+
+Returns the most recent active message with each friend in a single, optimized query. Useful for friend list previews.
+
+Response (example):
+```json
+[
+  {
+    "user_id": 2,
+    "message_id": 123,
+    "sender_id": 1,
+    "content": "See you soon!",
+    "file_url": null,
+    "filename": null,
+    "timestamp": "2025-11-29T12:34:56.000000Z",
+    "delete_after": 300,
+    "expires_at": "2025-11-29T12:39:56.000000Z"
+  }
+]
+```
 
 ## Timed Message Deletion
 
@@ -477,12 +517,12 @@ Then clear caches / restart PHP-FPM as needed.
 
 ## CORS Configuration
 
-By default, CORS is configured to allow requests from `http://localhost:3000` (React dev server).
+By default, CORS is configured to allow requests from your local frontend dev server (e.g., `http://localhost:5173` for Vite or `http://localhost:3000` for CRA).
 
 To change this, update `FRONTEND_URL` in your `.env`:
 
 ```
-FRONTEND_URL=http://localhost:3000
+FRONTEND_URL=http://localhost:5173
 ```
 
 ## Testing
