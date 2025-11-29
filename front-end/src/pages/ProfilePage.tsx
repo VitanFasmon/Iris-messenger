@@ -2,16 +2,20 @@ import React from "react";
 import { ProfileSettings } from "../features/profile/components/ProfileSettings";
 import { useSession } from "../features/auth/hooks/useSession";
 import { getFullUrl } from "../lib/urls";
+import { useTheme } from "../hooks/useTheme";
 
 const ProfilePage: React.FC = () => {
+  const { colors } = useTheme();
   const { data: user } = useSession();
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-950">
+    <div className={`flex-1 overflow-y-auto ${colors.bg.primary}`}>
       <div className="px-4 lg:px-6 py-8 flex flex-col items-center gap-8">
         {/* Avatar Cluster */}
         <div className="flex flex-col items-center gap-4">
           <div className="relative">
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-800 border border-gray-700 shadow-lg">
+            <div
+              className={`w-28 h-28 rounded-full overflow-hidden ${colors.avatar.bg} border ${colors.avatar.border} shadow-lg`}
+            >
               {user?.profile_picture_url ? (
                 <img
                   src={`${getFullUrl(
@@ -21,7 +25,9 @@ const ProfilePage: React.FC = () => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-semibold text-gray-300">
+                <div
+                  className={`w-full h-full flex items-center justify-center text-2xl font-semibold ${colors.avatar.text}`}
+                >
                   {(user?.username?.[0] || "U").toUpperCase()}
                 </div>
               )}
@@ -41,16 +47,20 @@ const ProfilePage: React.FC = () => {
             </button>
           </div>
           <div className="text-center">
-            <h1 className="text-xl font-semibold text-white">
+            <h1 className={`text-xl font-semibold ${colors.text.primary}`}>
               {user?.username || "Guest"}
             </h1>
             {user?.email && (
-              <p className="text-sm text-gray-400 mt-1">{user.email}</p>
+              <p className={`text-sm ${colors.text.tertiary} mt-1`}>
+                {user.email}
+              </p>
             )}
           </div>
         </div>
         {/* Profile Settings Card */}
-        <div className="w-full bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-md lg:max-w-2xl shadow-lg">
+        <div
+          className={`w-full ${colors.card.bg} border ${colors.border.primary} rounded-xl p-6 max-w-md lg:max-w-2xl shadow-lg`}
+        >
           <h2 className="text-sm font-semibold text-emerald-400 mb-4 tracking-wide">
             Profile Information
           </h2>

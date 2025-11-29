@@ -38,7 +38,7 @@ export const ToastContainer: React.FC<ToastProps> = ({
               : "border-gray-300"
           }`}
         >
-          <span className="flex-1 break-words">{t.message}</span>
+          <span className="flex-1 wrap-break-word">{t.message}</span>
           <button
             onClick={() => onDismiss(t.id)}
             className="text-xs text-gray-500 hover:text-gray-700"

@@ -5,12 +5,14 @@ import {
 } from "../hooks/useMessages";
 import { MessageBubble } from "./MessageBubble";
 import { useSession } from "../../auth/hooks/useSession";
+import { useTheme } from "../../../hooks/useTheme";
 
 interface Props {
   receiverId: string | number | null;
 }
 
 export const MessageList: React.FC<Props> = ({ receiverId }) => {
+  const { colors } = useTheme();
   const { data, isLoading, error } = useDirectMessages(receiverId);
   const { data: user } = useSession();
   const deleteMessage = useDeleteDirectMessage(receiverId);
@@ -22,12 +24,16 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
 
   if (!receiverId)
     return (
-      <div className="p-4 text-sm text-gray-500">
+      <div className={`p-4 text-sm ${colors.text.muted}`}>
         Select a friend to start chatting.
       </div>
     );
   if (isLoading)
-    return <div className="p-4 text-sm text-gray-500">Loading messages...</div>;
+    return (
+      <div className={`p-4 text-sm ${colors.text.muted}`}>
+        Loading messages...
+      </div>
+    );
   if (error)
     return (
       <div className="p-4 text-sm text-red-600">Failed to load messages.</div>

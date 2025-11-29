@@ -3,12 +3,22 @@ import { updateProfile, changePassword } from "../features/profile/api/profile";
 import { useSession } from "../features/auth/hooks/useSession";
 import { useProfilePicture } from "../features/profile/hooks/useProfilePicture";
 // import { ProfileSettings } from "../features/profile/components/ProfileSettings";
-import { LogOut, User as UserIcon, Mail, Lock, Camera } from "lucide-react";
+import {
+  LogOut,
+  User as UserIcon,
+  Mail,
+  Lock,
+  Camera,
+  Palette,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { clearAccessToken, getAccessToken } from "../lib/tokenStore";
 import { useNavigate } from "react-router-dom";
 import { useUiStore } from "../store/uiStore";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFullUrl } from "../lib/urls";
+import { useTheme } from "../hooks/useTheme";
 
 export default function SettingsPage() {
   const { data: user } = useSession();
@@ -19,6 +29,7 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const { upload } = useProfilePicture();
   const fileRef = useRef<HTMLInputElement>(null);
+  const { theme, setTheme, colors } = useTheme();
 
   // Placeholder local form state (could be replaced with form lib)
   const [usernameDraft, setUsernameDraft] = useState(user?.username || "");
@@ -140,15 +151,21 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-900">
+    <div className={`flex-1 overflow-y-auto ${colors.bg.primary}`}>
       <div className="flex items-center justify-start w-full p-4 lg:p-6">
-        <h2 className="text-lg font-semibold text-white">Settings & Profile</h2>
+        <h2 className={`text-lg font-semibold ${colors.text.primary}`}>
+          Settings & Profile
+        </h2>
       </div>
       <div className="pb-8 flex flex-col items-center gap-10 lg:px-6">
         {/* Avatar & Basic Info */}
-        <div className="flex flex-col items-center gap-4 bg-gray-900 border-t border-gray-800 p-5 w-full lg:max-w-2xl lg:rounded-xl lg:border lg:shadow-lg">
+        <div
+          className={`flex flex-col items-center gap-4 ${colors.card.bg} border-t ${colors.border.primary} p-5 w-full lg:max-w-2xl lg:rounded-xl lg:border lg:shadow-lg`}
+        >
           <div className="relative p-4">
-            <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-800 border border-gray-700 shadow-lg">
+            <div
+              className={`w-24 h-24 rounded-full overflow-hidden ${colors.avatar.bg} border ${colors.avatar.border} shadow-lg`}
+            >
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -156,7 +173,9 @@ export default function SettingsPage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-2xl font-semibold text-gray-300">
+                <div
+                  className={`w-full h-full flex items-center justify-center text-2xl font-semibold ${colors.avatar.text}`}
+                >
                   {(user?.username?.[0] || "U").toUpperCase()}
                 </div>
               )}
@@ -173,33 +192,41 @@ export default function SettingsPage() {
               onClick={() => fileRef.current?.click()}
               aria-label="Change profile picture"
               disabled={upload.status === "pending"}
-              className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-600 text-gray-900 flex items-center justify-center shadow-md hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              className={`absolute bottom-0 right-0 w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center shadow-md hover:bg-emerald-500 transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                theme === "light" ? "text-white" : "text-gray-900"
+              }`}
             >
               <Camera className="w-4 h-4" />
             </button>
           </div>
           <div className="text-center">
-            <h1 className="text-white text-lg font-semibold">
+            <h1 className={`${colors.text.primary} text-lg font-semibold`}>
               {user?.username || "Guest"}
             </h1>
             {user?.email && (
-              <p className="text-sm text-gray-400 mt-1">{user.email}</p>
+              <p className={`text-sm ${colors.text.tertiary} mt-1`}>
+                {user.email}
+              </p>
             )}
           </div>
         </div>
 
         <div className="w-full flex flex-col gap-8 lg:max-w-2xl">
           {/* Profile Information Section */}
-          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r">
+          <section
+            className={`${colors.card.bg} border-l-0 border-r-0 border ${colors.border.primary} p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium">
-                <UserIcon className="w-4 h-4 text-gray-400" /> Profile
-                Information
+              <div
+                className={`flex items-center gap-2 ${colors.text.primary} text-sm font-medium`}
+              >
+                <UserIcon className={`w-4 h-4 ${colors.text.tertiary}`} />{" "}
+                Profile Information
               </div>
               {!editingProfile && (
                 <button
                   onClick={() => setEditingProfile(true)}
-                  className="text-emerald-400 text-xs px-3 py-1.5 rounded border border-gray-700 hover:bg-gray-800 hover:text-emerald-300 transition"
+                  className={`text-emerald-400 text-xs px-3 py-1.5 rounded border ${colors.border.secondary} ${colors.card.hover} hover:text-emerald-300 transition`}
                 >
                   Edit
                 </button>
@@ -208,23 +235,27 @@ export default function SettingsPage() {
             {editingProfile ? (
               <form onSubmit={handleProfileSave} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-gray-300 text-xs">Username</label>
+                  <label className={`${colors.text.secondary} text-xs`}>
+                    Username
+                  </label>
                   <input
                     value={usernameDraft}
                     onChange={(e) => setUsernameDraft(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    className={`w-full rounded ${colors.input.bg} border ${colors.input.border} px-3 py-2 text-sm ${colors.input.text} ${colors.input.placeholder} focus:outline-none focus:ring-2 focus:ring-emerald-600`}
                     placeholder="username"
                   />
-                  <p className="text-[10px] text-gray-500">
+                  <p className={`text-[10px] ${colors.text.muted}`}>
                     Your unique username
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-gray-300 text-xs">Email</label>
+                  <label className={`${colors.text.secondary} text-xs`}>
+                    Email
+                  </label>
                   <input
                     value={emailDraft}
                     onChange={(e) => setEmailDraft(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    className={`w-full rounded ${colors.input.bg} border ${colors.input.border} px-3 py-2 text-sm ${colors.input.text} ${colors.input.placeholder} focus:outline-none focus:ring-2 focus:ring-emerald-600`}
                     placeholder="email@example.com"
                   />
                 </div>
@@ -238,43 +269,106 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setEditingProfile(false)}
-                    className="flex-1 border border-gray-700 text-gray-300 hover:bg-gray-800 text-xs rounded py-2 transition"
+                    className={`flex-1 border ${colors.border.secondary} ${colors.text.secondary} ${colors.card.hover} text-xs rounded py-2 transition`}
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="space-y-3 bg-gray-800/40 border border-gray-700 rounded-lg p-4">
+              <div
+                className={`space-y-3 ${colors.bg.secondary} border ${colors.border.secondary} rounded-lg p-4`}
+              >
                 <div className="flex items-center gap-3">
-                  <UserIcon className="w-4 h-4 text-gray-400" />
+                  <UserIcon className={`w-4 h-4 ${colors.text.tertiary}`} />
                   <div>
-                    <p className="text-[10px] text-gray-500">Username</p>
-                    <p className="text-sm text-white">{user?.username}</p>
+                    <p className={`text-[10px] ${colors.text.muted}`}>
+                      Username
+                    </p>
+                    <p className={`text-sm ${colors.text.primary}`}>
+                      {user?.username}
+                    </p>
                   </div>
                 </div>
-                <div className="h-px bg-gray-700" />
+                <div className={`h-px ${colors.border.secondary}`} />
                 <div className="flex items-center gap-3">
-                  <Mail className="w-4 h-4 text-gray-400" />
+                  <Mail className={`w-4 h-4 ${colors.text.tertiary}`} />
                   <div>
-                    <p className="text-[10px] text-gray-500">Email</p>
-                    <p className="text-sm text-white">{user?.email || "—"}</p>
+                    <p className={`text-[10px] ${colors.text.muted}`}>Email</p>
+                    <p className={`text-sm ${colors.text.primary}`}>
+                      {user?.email || "—"}
+                    </p>
                   </div>
                 </div>
               </div>
             )}
           </section>
 
-          {/* Security Section */}
-          <section className="bg-gray-900 p-5 border-l-0 border-r-0 border-t border-b border-gray-800 lg:rounded-xl lg:border-l lg:border-r lg:shadow-lg">
+          {/* Appearance Section */}
+          <section
+            className={`${colors.card.bg} p-5 border-l-0 border-r-0 border-t border-b ${colors.border.primary} lg:rounded-xl lg:border-l lg:border-r lg:shadow-lg`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2 text-white text-sm font-medium">
-                <Lock className="w-4 h-4 text-gray-400" /> Security
+              <div
+                className={`flex items-center gap-2 ${colors.text.primary} text-sm font-medium`}
+              >
+                <Palette className={`w-4 h-4 ${colors.text.tertiary}`} />{" "}
+                Appearance
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label
+                  className={`${colors.text.secondary} text-xs mb-2 block`}
+                >
+                  Theme
+                </label>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition ${
+                      theme === "light"
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+                        : `${colors.border.secondary} ${colors.card.bg} ${colors.text.secondary} hover:border-emerald-400`
+                    }`}
+                  >
+                    <Sun className="w-4 h-4" />
+                    <span className="text-sm font-medium">Light</span>
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition ${
+                      theme === "dark"
+                        ? "border-emerald-500 bg-emerald-950/50 text-emerald-400"
+                        : `${colors.border.secondary} ${colors.card.bg} ${colors.text.secondary} hover:border-emerald-400`
+                    }`}
+                  >
+                    <Moon className="w-4 h-4" />
+                    <span className="text-sm font-medium">Dark</span>
+                  </button>
+                </div>
+              </div>
+              <p className={`text-xs ${colors.text.tertiary}`}>
+                Choose your preferred theme. Your selection will be saved
+                automatically.
+              </p>
+            </div>
+          </section>
+
+          {/* Security Section */}
+          <section
+            className={`${colors.card.bg} p-5 border-l-0 border-r-0 border-t border-b ${colors.border.primary} lg:rounded-xl lg:border-l lg:border-r lg:shadow-lg`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div
+                className={`flex items-center gap-2 ${colors.text.primary} text-sm font-medium`}
+              >
+                <Lock className={`w-4 h-4 ${colors.text.tertiary}`} /> Security
               </div>
               {!changingPassword && (
                 <button
                   onClick={() => setChangingPassword(true)}
-                  className="text-emerald-400 text-xs px-3 py-1.5 rounded border border-gray-700 hover:bg-gray-800 hover:text-emerald-300 transition"
+                  className={`text-emerald-400 text-xs px-3 py-1.5 rounded border ${colors.border.secondary} ${colors.card.hover} hover:text-emerald-300 transition`}
                 >
                   Change Password
                 </button>
@@ -283,34 +377,36 @@ export default function SettingsPage() {
             {changingPassword ? (
               <form onSubmit={handlePasswordUpdate} className="space-y-4">
                 <div className="space-y-2">
-                  <label className="text-gray-300 text-xs">
+                  <label className={`${colors.text.secondary} text-xs`}>
                     Current Password
                   </label>
                   <input
                     type="password"
                     value={currentPw}
                     onChange={(e) => setCurrentPw(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    className={`w-full rounded ${colors.input.bg} border ${colors.input.border} px-3 py-2 text-sm ${colors.input.text} focus:outline-none focus:ring-2 focus:ring-emerald-600`}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-gray-300 text-xs">New Password</label>
+                  <label className={`${colors.text.secondary} text-xs`}>
+                    New Password
+                  </label>
                   <input
                     type="password"
                     value={newPw}
                     onChange={(e) => setNewPw(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    className={`w-full rounded ${colors.input.bg} border ${colors.input.border} px-3 py-2 text-sm ${colors.input.text} focus:outline-none focus:ring-2 focus:ring-emerald-600`}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-gray-300 text-xs">
+                  <label className={`${colors.text.secondary} text-xs`}>
                     Confirm New Password
                   </label>
                   <input
                     type="password"
                     value={confirmPw}
                     onChange={(e) => setConfirmPw(e.target.value)}
-                    className="w-full rounded bg-gray-800 border border-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                    className={`w-full rounded ${colors.input.bg} border ${colors.input.border} px-3 py-2 text-sm ${colors.input.text} focus:outline-none focus:ring-2 focus:ring-emerald-600`}
                   />
                 </div>
                 <div className="flex gap-2">
@@ -323,20 +419,22 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setChangingPassword(false)}
-                    className="flex-1 border border-gray-700 text-gray-300 hover:bg-gray-800 text-xs rounded py-2 transition"
+                    className={`flex-1 border ${colors.border.secondary} ${colors.text.secondary} ${colors.card.hover} text-xs rounded py-2 transition`}
                   >
                     Cancel
                   </button>
                 </div>
               </form>
             ) : (
-              <p className="text-xs text-gray-400">
+              <p className={`text-xs ${colors.text.tertiary}`}>
                 Change your password regularly to keep your account secure.
               </p>
             )}
           </section>
           {/* Logout Section */}
-          <section className="bg-gray-900 border-l-0 border-r-0 border border-gray-800 p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r">
+          <section
+            className={`${colors.card.bg} border-l-0 border-r-0 border ${colors.border.primary} p-5 shadow-lg lg:rounded-xl lg:border-l lg:border-r`}
+          >
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white text-sm font-medium rounded py-2 transition"

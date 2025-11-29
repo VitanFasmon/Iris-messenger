@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import type { Message } from "../api/messages";
 import { sanitize } from "../../../lib/sanitize";
 import { getFullUrl } from "../../../lib/urls";
+import { useTheme } from "../../../hooks/useTheme";
 
 interface Props {
   message: Message;
@@ -14,6 +15,7 @@ export const MessageBubble: React.FC<Props> = ({
   isMine,
   onDelete,
 }) => {
+  const { colors, theme } = useTheme();
   const status = message.localStatus;
   const timeLabel = new Date(message.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
@@ -57,8 +59,15 @@ export const MessageBubble: React.FC<Props> = ({
 
   function formatRemaining(ms: number) {
     const totalSec = Math.floor(ms / 1000);
-    const m = Math.floor(totalSec / 60);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
+
+    if (h > 0) {
+      return `${h}:${m.toString().padStart(2, "0")}:${s
+        .toString()
+        .padStart(2, "0")}`;
+    }
     return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
@@ -74,8 +83,8 @@ export const MessageBubble: React.FC<Props> = ({
             (status === "failed"
               ? "bg-red-600/20 border border-red-500 text-white"
               : isMine
-              ? "bg-emerald-600 text-white rounded-br-sm"
-              : "bg-gray-800 border border-gray-700 text-white rounded-bl-sm")
+              ? `${colors.message.mine} rounded-br-sm`
+              : `${colors.message.theirs} rounded-bl-sm`)
           }
         >
           {message.content && (
@@ -94,7 +103,7 @@ export const MessageBubble: React.FC<Props> = ({
                     src={fullFileUrl}
                     alt="attachment preview"
                     loading="lazy"
-                    className="rounded-xl max-h-64 object-cover border border-gray-700 group-hover:opacity-90 transition cursor-pointer"
+                    className={`rounded-xl max-h-64 object-cover border ${colors.border.secondary} group-hover:opacity-90 transition cursor-pointer`}
                   />
                 </button>
               </div>
@@ -109,14 +118,18 @@ export const MessageBubble: React.FC<Props> = ({
               </a>
             ))}
           <div className="mt-1 px-2 flex items-center gap-2">
-            <span className="text-xs text-gray-300">{timeLabel}</span>
+            <span className={`text-xs ${colors.message.timestamp}`}>
+              {timeLabel}
+            </span>
             {remaining !== null && remaining > 0 && (
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-900/40 text-emerald-300 border border-gray-700">
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full bg-gray-900/40 text-emerald-300 border ${colors.border.secondary}`}
+              >
                 {formatRemaining(remaining)}
               </span>
             )}
             {status === "sending" && (
-              <span className="text-xs text-gray-400 animate-pulse">
+              <span className={`text-xs ${colors.text.tertiary} animate-pulse`}>
                 sending…
               </span>
             )}
@@ -136,13 +149,19 @@ export const MessageBubble: React.FC<Props> = ({
                   e.stopPropagation();
                   setShowMenu(!showMenu);
                 }}
-                className="text-xs text-gray-400 hover:text-white px-2 py-1 rounded hover:bg-gray-800 transition-colors"
+                className={`text-xs px-2 py-1 rounded transition-colors ${
+                  theme === "light"
+                    ? `${colors.text.tertiary} ${colors.bg.hover} hover:bg-gray-200`
+                    : `${colors.text.tertiary} ${colors.card.hover} hover:text-white`
+                }`}
               >
                 Unsend
               </button>
               {showMenu && (
-                <div className="absolute right-0 top-8 bg-gray-800 border border-gray-700 rounded-lg shadow-xl w-40 z-10 p-2">
-                  <p className="text-xs text-gray-400 mb-2">
+                <div
+                  className={`absolute right-0 top-8 ${colors.card.bg} border ${colors.border.secondary} rounded-lg shadow-xl w-40 z-10 p-2`}
+                >
+                  <p className={`text-xs ${colors.text.tertiary} mb-2`}>
                     Delete this message?
                   </p>
                   <div className="flex gap-2">
@@ -151,7 +170,7 @@ export const MessageBubble: React.FC<Props> = ({
                         e.stopPropagation();
                         setShowMenu(false);
                       }}
-                      className="flex-1 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700 rounded"
+                      className={`flex-1 px-2 py-1 text-xs ${colors.text.secondary} ${colors.bg.hover} rounded`}
                     >
                       Cancel
                     </button>

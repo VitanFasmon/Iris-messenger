@@ -8,6 +8,7 @@ import { useLocation } from "react-router-dom";
 import { useSession } from "../../features/auth/hooks/useSession";
 import { useQueryClient } from "@tanstack/react-query";
 import { getFullUrl } from "../../lib/urls";
+import { useTheme } from "../../hooks/useTheme";
 
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
@@ -48,6 +49,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { data: user } = useSession();
   const queryClient = useQueryClient();
+  const { colors, theme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -76,15 +78,23 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-300">
-      <div className="w-full  h-screen bg-gray-900 shadow-xl flex flex-col">
-        <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-emerald-900/30 bg-emerald-950/30">
+    <div
+      className={`min-h-screen flex items-center justify-center ${colors.bg.container}`}
+    >
+      <div
+        className={`w-full h-screen ${colors.bg.primary} shadow-xl flex flex-col`}
+      >
+        <header
+          className={`h-16 flex items-center justify-between px-4 lg:px-6 border-b ${colors.header.border} ${colors.header.bg}`}
+        >
           <button
             onClick={() => navigate("/app/settings")}
             className="flex items-center gap-3 group"
             aria-label="Open profile"
           >
-            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-gray-700 group-hover:border-emerald-500 transition">
+            <div
+              className={`relative w-10 h-10 rounded-full overflow-hidden ${colors.avatar.bg} border ${colors.avatar.border} group-hover:border-emerald-500 transition`}
+            >
               {user?.profile_picture_url ? (
                 <img
                   src={`${getFullUrl(
@@ -95,58 +105,55 @@ export default function AppLayout() {
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-xs font-medium text-gray-300">
+                <div
+                  className={`w-full h-full flex items-center justify-center text-xs font-medium ${colors.avatar.text}`}
+                >
                   {(user?.username?.[0] || "U").toUpperCase()}
                 </div>
               )}
             </div>
             <span
-              className="text-sm font-semibold text-white tracking-wide max-w-[140px] lg:max-w-[200px] truncate"
+              className={`text-sm font-semibold ${colors.text.primary} tracking-wide max-w-[140px] lg:max-w-[200px] truncate`}
               title={user?.username || "Guest"}
             >
               {user?.username || "Guest"}
             </span>
           </button>
           <nav className="flex items-center gap-2" aria-label="Primary">
-            {(() => {
-              const chatActive =
+            <button
+              onClick={() => navigate("/app")}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
                 location.pathname === "/app" ||
-                location.pathname.startsWith("/app/chat");
-              return (
-                <button
-                  onClick={() => navigate("/app")}
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
-                    chatActive
-                      ? "bg-emerald-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                  }`}
-                  aria-label="Chats"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                </button>
-              );
-            })()}
-            {(() => {
-              const settingsActive =
-                location.pathname.startsWith("/app/settings");
-              return (
-                <button
-                  onClick={() => navigate("/app/settings")}
-                  className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
-                    settingsActive
-                      ? "bg-emerald-600 text-white"
-                      : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                  }`}
-                  aria-label="Settings & Profile"
-                >
-                  <Settings className="w-5 h-5" />
-                </button>
-              );
-            })()}
-            <div className="w-px h-6 bg-gray-700 mx-2" aria-hidden="true" />
+                location.pathname.startsWith("/app/chat")
+                  ? "bg-emerald-600 text-white"
+                  : theme === "light"
+                  ? `${colors.text.tertiary} ${colors.bg.hover} hover:bg-gray-200`
+                  : `${colors.text.tertiary} ${colors.bg.hover} hover:text-white`
+              }`}
+              aria-label="Chats"
+            >
+              <MessageCircle className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => navigate("/app/settings")}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-colors ${
+                location.pathname.startsWith("/app/settings")
+                  ? "bg-emerald-600 text-white"
+                  : theme === "light"
+                  ? `${colors.text.tertiary} ${colors.bg.hover} hover:bg-gray-200`
+                  : `${colors.text.tertiary} ${colors.bg.hover} hover:text-white`
+              }`}
+              aria-label="Settings & Profile"
+            >
+              <Settings className="w-5 h-5" />
+            </button>
+            <div
+              className={`w-px h-6 ${colors.border.secondary} mx-2`}
+              aria-hidden="true"
+            />
             <button
               onClick={handleLogout}
-              className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-600 hover:text-white transition-colors"
+              className={`w-10 h-10 flex items-center justify-center rounded-xl ${colors.text.tertiary} hover:bg-red-600 hover:text-white transition-colors`}
               aria-label="Logout"
             >
               <LogOut className="w-5 h-5" />
