@@ -296,12 +296,13 @@ php artisan test --testsuite=Feature
 php artisan test --coverage
 ```
 
-**Test Coverage:**
-- Authentication: 7 tests
-- Friend System: 19 tests  
+**Test Coverage (Feature + Unit):**
+- Authentication: 13 tests (login/register/profile refresh variants)
+- Friend System: 19 tests
 - Messaging: 23 tests
 - Profile Features: 16 tests
-- **Total: 65 tests**
+- Cleanup / Presence / Example: 8 tests
+- **Total: 79 tests**
 
 ## 🤝 Contributing
 
@@ -370,6 +371,7 @@ php artisan serve
 See [API.md](API.md) for complete endpoint documentation and examples.
 
 **Key Endpoints:**
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - Login and get JWT token
 - `GET /api/friends` - Get friends list
@@ -438,11 +440,13 @@ routes/api.php - All API routes with JWT middleware
 ### Development
 
 Run tests:
+
 ```bash
 php artisan test
 ```
 
 Clear caches:
+
 ```bash
 php artisan config:clear
 php artisan cache:clear
