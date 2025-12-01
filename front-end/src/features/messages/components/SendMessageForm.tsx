@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { formatTimerDisplay as formatTimerDisplayShared } from "../../../lib/format";
 import { useSendDirectMessage } from "../hooks/useMessages";
 import { Paperclip, Image as ImageIcon, Timer, Send } from "lucide-react";
 import { useSession } from "../../auth/hooks/useSession";
@@ -48,12 +49,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
     setShowTimer(false);
   };
 
-  const formatTimerDisplay = (seconds: number): string => {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-    return `${Math.round(seconds / 86400)}d`;
-  };
+  const formatTimerDisplay = formatTimerDisplayShared;
 
   const calculateDeletionTime = (): string => {
     const totalSeconds =
@@ -203,7 +199,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                   role="listbox"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {[null, 30, 300, 1800, 7200, 86400, 172800].map((s) => {
+                  {TIMER_PRESETS.map((s) => {
                     const label = (() => {
                       if (s === null) return "No timer";
                       if (s < 60) return `${s}s`;
@@ -316,6 +312,8 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                   </label>
                   <input
                     type="number"
+                    aria-invalid={customDays < 0}
+                    aria-describedby="custom-timer-hint"
                     min="0"
                     max="365"
                     value={customDays}
@@ -333,6 +331,8 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                   </label>
                   <input
                     type="number"
+                    aria-invalid={customHours < 0 || customHours > 23}
+                    aria-describedby="custom-timer-hint"
                     min="0"
                     max="23"
                     value={customHours}
@@ -352,6 +352,8 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                   </label>
                   <input
                     type="number"
+                    aria-invalid={customMinutes < 0 || customMinutes > 59}
+                    aria-describedby="custom-timer-hint"
                     min="0"
                     max="59"
                     value={customMinutes}
@@ -371,6 +373,8 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                   </label>
                   <input
                     type="number"
+                    aria-invalid={customSeconds < 0 || customSeconds > 59}
+                    aria-describedby="custom-timer-hint"
                     min="0"
                     max="59"
                     value={customSeconds}
@@ -395,7 +399,7 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2" id="custom-timer-hint">
                 <button
                   onClick={handleCustomTimerSubmit}
                   className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm rounded-lg py-2 transition"
@@ -416,3 +420,14 @@ export const SendMessageForm: React.FC<Props> = ({ receiverId }) => {
     </>
   );
 };
+
+// Shared timer preset values (null means no timer)
+const TIMER_PRESETS: (number | null)[] = [
+  null,
+  30,
+  300,
+  1800,
+  7200,
+  86400,
+  172800,
+];

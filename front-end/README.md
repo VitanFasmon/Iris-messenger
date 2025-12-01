@@ -114,6 +114,8 @@ See `documents/FRONT_END_PLAN.md` for detailed architecture and implementation p
 | Messages | `GET /api/messages/{receiver_id}` | Full thread (both directions) |
 | Messages | `POST /api/messages/{receiver_id}` | Send (content/file/delete_after) |
 | Messages | `DELETE /api/messages/{id}` | Sender delete |
+| Messages | `POST /api/messages/mark-read` | Mark messages as read (body: message_ids[]) |
+| Messages | `GET /api/messages/unread-counts` | Get unread message counts per sender |
 
 All protected endpoints require `Authorization: Bearer <token>` header.
 
@@ -123,7 +125,7 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 - Friend list previews built from `/messages/last` (eliminates N+1 queries).
 - Optimistic send: bubble enters `sending` state, then `sent` or `failed`.
 - Expiry: backend sets `expires_at` (from `delete_after` seconds). Frontend runs per‑message countdown and hides bubble instantly at zero.
-- Unread heuristic (placeholder): pulse badge if last message sender != me and chat not active.
+- **Read tracking**: Messages are marked as read when viewed. Backend tracks via `message_reads` table. Unread counts displayed as red badges on conversation list, updated via polling every 30 seconds.
 
 ## Layout Overview
 
@@ -142,10 +144,26 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 - Derived from `last_online` timestamps: `online <5m`, `recent <60m`, `offline` else.
 - Future: add `away (15-60m)` tier + tooltip with exact relative time.
 
+## Recent Updates
+
+### Message Read Tracking (December 2025)
+
+- Implemented backend-driven read tracking with `message_reads` table
+- Messages automatically marked as read when conversation is viewed
+- Unread message counts displayed as red badges on conversation list
+- Real-time updates via 30-second polling of unread counts endpoint
+- Idempotent marking prevents duplicate read records
+- Query invalidation ensures UI stays synchronized with backend state
+
+### Avatar Loading Fixes
+
+- Fixed avatar loading in AddFriendModal (search results, incoming/outgoing requests)
+- Fixed avatar loading in ChatsPage friend request sections
+- All avatars now use `getFullUrl()` utility to correctly resolve backend URLs
+
 ## Planned Enhancements
-- AddFriendModal UI overhaul (use backend outgoing list; richer tiles).
-- Profile/password forms wired to `PATCH /api/profile` & `POST /api/auth/password`.
+
 - Presence refinement & tooltip.
 - Deprecated type cleanup (`types/api.ts`).
 - Vitest + MSW test suite build‑out.
-- Potential real‑time upgrade (WebSockets) for live updates.
+- Potential real‑time upgrade (WebSockets) for live updates and instant read receipts.

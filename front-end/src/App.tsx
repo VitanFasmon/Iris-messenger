@@ -1,10 +1,11 @@
 import AppRouter from "./app/router";
 import React, { useEffect } from "react";
 import { useUiStore } from "./store/uiStore";
+import { ToastContainer } from "./ui/Toast";
 
 // Runs startup environment checks (missing vars, host mismatch) and surfaces them via console + toast.
 const StartupChecks: React.FC = () => {
-  const { pushToast } = useUiStore();
+  const { pushToast, toastQueue, removeToast } = useUiStore();
   useEffect(() => {
     const apiBase = import.meta.env.VITE_API_URL;
     if (!apiBase) {
@@ -31,7 +32,26 @@ const StartupChecks: React.FC = () => {
       pushToast({ type: "error", message: "Invalid VITE_API_URL format." });
     }
   }, [pushToast]);
-  return null;
+
+  return (
+    <>
+      {/* Global toast container - shows on all pages */}
+      <div
+        aria-live="polite"
+        aria-atomic="true"
+        className="pointer-events-none"
+      >
+        <ToastContainer
+          toasts={toastQueue.map((t) => ({
+            id: t.id,
+            message: t.message,
+            variant: t.type,
+          }))}
+          onDismiss={removeToast}
+        />
+      </div>
+    </>
+  );
 };
 
 export default function App() {

@@ -104,3 +104,35 @@ export async function deleteMessage(
   const res: AxiosResponse<any> = await api.delete(`/messages/${messageId}`);
   return res.data;
 }
+
+// Mark messages as read ---------------------------------------------------
+export interface MarkAsReadPayload {
+  message_ids: (string | number)[];
+}
+
+export interface MarkAsReadResponse {
+  message: string;
+  marked_count: number;
+}
+
+export async function markMessagesAsRead(
+  payload: MarkAsReadPayload
+): Promise<MarkAsReadResponse> {
+  const res: AxiosResponse<MarkAsReadResponse> = await api.post(
+    "/messages/mark-read",
+    payload
+  );
+  return res.data;
+}
+
+// Get unread message counts per conversation ------------------------------
+export interface UnreadCounts {
+  [senderId: string]: number;
+}
+
+export async function fetchUnreadCounts(): Promise<UnreadCounts> {
+  const res: AxiosResponse<UnreadCounts> = await api.get(
+    "/messages/unread-counts"
+  );
+  return res.data;
+}

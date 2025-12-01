@@ -12,6 +12,7 @@ import {
 import { usePresencePolling } from "../features/presence/hooks/usePresencePolling";
 import { AddFriendModal } from "../features/friends/components/AddFriendModal";
 import { useLastMessages } from "../features/messages/hooks/useLastMessages";
+import { useUnreadCounts } from "../features/messages/hooks/useUnreadCounts";
 import { timeAgo } from "../lib/time";
 import { Search, UserPlus, ArrowLeft, Clock, MoreVertical } from "lucide-react";
 import { sanitize } from "../lib/sanitize";
@@ -34,6 +35,7 @@ const ChatsPage: React.FC = () => {
   const { data: friends } = useFriends();
   const { data: user } = useSession();
   const { data: presence } = usePresencePolling(20_000);
+  const { data: unreadCounts } = useUnreadCounts();
   const { data: requests } = useFriendRequests();
   const { data: outgoing } = useOutgoingFriendRequests();
   const { data: lastMessages } = useLastMessages();
@@ -43,8 +45,11 @@ const ChatsPage: React.FC = () => {
   const [confirmRemove, setConfirmRemove] = useState(false);
 
   useEffect(() => {
-    if (id) setActiveReceiverId(id);
-    else setActiveReceiverId(null);
+    if (id) {
+      setActiveReceiverId(id);
+    } else {
+      setActiveReceiverId(null);
+    }
   }, [id]);
 
   const presenceMap = new Map(presence?.map((p) => [p.id, p.status]));
@@ -53,6 +58,7 @@ const ChatsPage: React.FC = () => {
   const lastMap = new Map(
     (lastMessages || []).map((m) => [String(m.user_id), m])
   );
+
   const enhancedFriends = (friends || []).map((f) => {
     const lm = lastMap.get(String(f.id));
     return {
@@ -140,9 +146,17 @@ const ChatsPage: React.FC = () => {
                     className={`flex items-center gap-2 ${colors.card.bg} border ${colors.border.secondary} rounded-lg p-2`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full ${colors.avatar.bg} flex items-center justify-center text-xs ${colors.avatar.text} shrink-0`}
+                      className={`w-8 h-8 rounded-full ${colors.avatar.bg} overflow-hidden flex items-center justify-center text-xs ${colors.avatar.text} shrink-0`}
                     >
-                      {r.user.username[0].toUpperCase()}
+                      {r.user.profile_picture_url ? (
+                        <img
+                          src={getFullUrl(r.user.profile_picture_url) || ""}
+                          alt={`${r.user.username}'s avatar`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        r.user.username[0].toUpperCase()
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`${colors.text.primary} truncate text-sm`}>
@@ -173,9 +187,17 @@ const ChatsPage: React.FC = () => {
                     className={`flex items-center gap-2 ${colors.card.bg} border ${colors.border.secondary} rounded-lg p-2`}
                   >
                     <div
-                      className={`w-8 h-8 rounded-full ${colors.avatar.bg} flex items-center justify-center text-xs ${colors.avatar.text} shrink-0`}
+                      className={`w-8 h-8 rounded-full ${colors.avatar.bg} overflow-hidden flex items-center justify-center text-xs ${colors.avatar.text} shrink-0`}
                     >
-                      {o.user.username[0].toUpperCase()}
+                      {o.user.profile_picture_url ? (
+                        <img
+                          src={getFullUrl(o.user.profile_picture_url) || ""}
+                          alt={`${o.user.username}'s avatar`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        o.user.username[0].toUpperCase()
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className={`${colors.text.primary} truncate text-sm`}>
@@ -208,10 +230,7 @@ const ChatsPage: React.FC = () => {
               <ul>
                 {filteredFriends.map((f) => {
                   const status = presenceMap.get(f.id) || "offline";
-                  const unread =
-                    f.lastMessageSenderId &&
-                    f.lastMessageSenderId !== user?.id &&
-                    String(activeReceiverId) !== String(f.id);
+                  const unreadCount = unreadCounts?.[String(f.id)] || 0;
                   const isActive = String(activeReceiverId) === String(f.id);
                   return (
                     <li key={f.id}>
@@ -251,10 +270,15 @@ const ChatsPage: React.FC = () => {
                                 ? "bg-yellow-500"
                                 : "bg-gray-400"
                             }`}
+                            role="status"
+                            aria-label={
+                              status === "online"
+                                ? "Online"
+                                : status === "recent"
+                                ? "Recently active"
+                                : "Offline"
+                            }
                           />
-                          {unread && (
-                            <span className="absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                          )}
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                           <div className="flex items-center justify-between mb-0.5">
@@ -280,6 +304,11 @@ const ChatsPage: React.FC = () => {
                               : "No messages yet"}
                           </p>
                         </div>
+                        {unreadCount > 0 && (
+                          <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                            {unreadCount}
+                          </span>
+                        )}
                       </button>
                     </li>
                   );
@@ -331,6 +360,14 @@ const ChatsPage: React.FC = () => {
                       ? "bg-yellow-500"
                       : "bg-gray-500"
                   }`}
+                  role="status"
+                  aria-label={
+                    activeStatus === "online"
+                      ? "Online"
+                      : activeStatus === "recent"
+                      ? "Recently active"
+                      : "Offline"
+                  }
                 />
               </div>
               <div>
@@ -479,9 +516,17 @@ const ChatsPage: React.FC = () => {
                   className={`flex items-center gap-3 ${colors.card.bg} border ${colors.border.secondary} rounded-lg p-3`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full ${colors.avatar.bg} flex items-center justify-center text-xs ${colors.avatar.text}`}
+                    className={`w-10 h-10 rounded-full ${colors.avatar.bg} overflow-hidden flex items-center justify-center text-xs ${colors.avatar.text}`}
                   >
-                    {r.user.username[0].toUpperCase()}
+                    {r.user.profile_picture_url ? (
+                      <img
+                        src={getFullUrl(r.user.profile_picture_url) || ""}
+                        alt={`${r.user.username}'s avatar`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      r.user.username[0].toUpperCase()
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`${colors.text.primary} truncate`}>
@@ -515,9 +560,17 @@ const ChatsPage: React.FC = () => {
                   className={`flex items-center gap-3 ${colors.card.bg} border ${colors.border.secondary} rounded-lg p-3`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full ${colors.avatar.bg} flex items-center justify-center text-xs ${colors.avatar.text}`}
+                    className={`w-10 h-10 rounded-full ${colors.avatar.bg} overflow-hidden flex items-center justify-center text-xs ${colors.avatar.text}`}
                   >
-                    {o.user.username[0].toUpperCase()}
+                    {o.user.profile_picture_url ? (
+                      <img
+                        src={getFullUrl(o.user.profile_picture_url) || ""}
+                        alt={`${o.user.username}'s avatar`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      o.user.username[0].toUpperCase()
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className={`${colors.text.primary} truncate`}>
@@ -553,10 +606,7 @@ const ChatsPage: React.FC = () => {
           <ul className="w-full">
             {filteredFriends.map((f) => {
               const status = presenceMap.get(f.id) || "offline";
-              const unread =
-                f.lastMessageSenderId &&
-                f.lastMessageSenderId !== user?.id &&
-                String(activeReceiverId) !== String(f.id);
+              const unreadCount = unreadCounts?.[String(f.id)] || 0;
               return (
                 <li key={f.id}>
                   <button
@@ -591,10 +641,15 @@ const ChatsPage: React.FC = () => {
                             ? "bg-yellow-500"
                             : "bg-gray-400"
                         }`}
+                        role="status"
+                        aria-label={
+                          status === "online"
+                            ? "Online"
+                            : status === "recent"
+                            ? "Recently active"
+                            : "Offline"
+                        }
                       />
-                      {unread && (
-                        <span className="absolute -top-0.5 -left-0.5 w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                      )}
                     </div>
                     <div className="flex-1 min-w-0 text-left">
                       <div className="flex items-center justify-between mb-1">
@@ -616,6 +671,11 @@ const ChatsPage: React.FC = () => {
                           : "No messages yet"}
                       </p>
                     </div>
+                    {unreadCount > 0 && (
+                      <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
                   </button>
                 </li>
               );

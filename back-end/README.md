@@ -9,8 +9,9 @@ A secure, ephemeral messaging API built with Laravel 12, featuring JWT authentic
 - **Friend System** - Send, accept, reject, and remove friend requests
 - **Ephemeral Messages** - Messages with automatic expiration (24h, 7d, 30d, or permanent)
 - **File Attachments** - Upload files with messages (images, documents, etc.)
+- **Message Read Tracking** - Track which messages have been read with unread counts per conversation
 - **User Presence** - Automatic "last online" tracking with 5-minute rate limiting
-- **Comprehensive Testing** - 79 feature tests with 100% endpoint coverage
+- **Comprehensive Testing** - 88 feature tests with 100% endpoint coverage
 
 ## 🛠️ Tech Stack
 
@@ -106,7 +107,7 @@ Then restart the server (Ctrl+C and rerun `php artisan serve`).
 php artisan test
 ```
 
-Expected output: **79 tests passing**
+Expected output: **88 tests passing**
 
 ## 📚 API Documentation
 
@@ -154,6 +155,8 @@ http://127.0.0.1:8000/api
 - `POST /messages/{receiver_id}` – Send message/file (optional `delete_after` seconds)
 - `DELETE /messages/{id}` – Delete own message
 - `GET /messages/download/{id}` – Download attachment with original filename
+- `POST /messages/mark-read` – Mark messages as read (array of message IDs)
+- `GET /messages/unread-counts` – Get unread message counts per conversation
 
 ## 🧪 Test User Credentials
 
@@ -300,9 +303,10 @@ php artisan test --coverage
 - Authentication: 13 tests (login/register/profile refresh variants)
 - Friend System: 19 tests
 - Messaging: 23 tests
+- Message Read Tracking: 9 tests
 - Profile Features: 16 tests
 - Cleanup / Presence / Example: 8 tests
-- **Total: 79 tests**
+- **Total: 88 tests**
 
 ## 🤝 Contributing
 

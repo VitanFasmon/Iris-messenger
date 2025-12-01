@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { formatRemaining as formatRemainingShared } from "../../../lib/format";
 import type { Message } from "../api/messages";
 import { sanitize } from "../../../lib/sanitize";
 import { getFullUrl } from "../../../lib/urls";
@@ -47,6 +48,12 @@ export const MessageBubble: React.FC<Props> = ({
         throw new Error("Download failed");
       }
 
+      // Basic content-type sanity check
+      const ct = response.headers.get("Content-Type") || "";
+      if (!ct || ct === "text/html") {
+        console.warn("Unexpected content type for download:", ct);
+      }
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -90,19 +97,7 @@ export const MessageBubble: React.FC<Props> = ({
 
   const expired = remaining !== null && remaining <= 0;
 
-  function formatRemaining(ms: number) {
-    const totalSec = Math.floor(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
-    const m = Math.floor((totalSec % 3600) / 60);
-    const s = totalSec % 60;
-
-    if (h > 0) {
-      return `${h}:${m.toString().padStart(2, "0")}:${s
-        .toString()
-        .padStart(2, "0")}`;
-    }
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }
+  const formatRemaining = formatRemainingShared;
 
   // If expired locally, don't render (MessageList will refetch periodically or next activity)
   if (expired) return null;

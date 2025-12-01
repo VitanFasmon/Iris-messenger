@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Attachment;
 use App\Models\Friend;
 use App\Models\Message;
+use App\Models\MessageRead;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -320,5 +321,87 @@ class MessageController extends Controller
         }, $rows);
 
         return response()->json($lastMessages);
+    }
+
+    /**
+     * Mark messages as read
+     * POST /api/messages/mark-read
+     * Body: { message_ids: [1, 2, 3] }
+     * Marks the specified messages as read by the authenticated user.
+     */
+    public function markAsRead(Request $request)
+    {
+        $user = auth('api')->user();
+
+        $validator = Validator::make($request->all(), [
+            'message_ids' => 'required|array',
+            'message_ids.*' => 'integer|exists:messages,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $messageIds = $request->message_ids;
+
+        // Verify these messages exist and user is the receiver
+        $validMessages = Message::whereIn('id', $messageIds)
+            ->where('receiver_id', $user->id)
+            ->get();
+
+        if ($validMessages->isEmpty()) {
+            return response()->json(['error' => 'No valid messages to mark as read'], 400);
+        }
+
+        // Insert read records (ignore duplicates)
+        $now = now();
+        $readRecords = [];
+        foreach ($validMessages as $message) {
+            $readRecords[] = [
+                'message_id' => $message->id,
+                'user_id' => $user->id,
+                'read_at' => $now,
+            ];
+        }
+
+        // Use insertOrIgnore to prevent duplicate key errors
+        \Illuminate\Support\Facades\DB::table('message_reads')->insertOrIgnore($readRecords);
+
+        return response()->json([
+            'message' => 'Messages marked as read',
+            'marked_count' => $validMessages->count(),
+        ]);
+    }
+
+    /**
+     * Get unread message counts per conversation
+     * GET /api/messages/unread-counts
+     * Returns: { friend_id: unread_count, ... }
+     */
+    public function unreadCounts()
+    {
+        $user = auth('api')->user();
+
+        // Get all messages where user is receiver and not yet read
+        // Use Eloquent query builder for database compatibility
+        $unreadCounts = Message::where('receiver_id', $user->id)
+            ->where('is_deleted', false)
+            ->where(function ($query) {
+                $query->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->whereDoesntHave('reads', function ($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->select('sender_id', \Illuminate\Support\Facades\DB::raw('COUNT(*) as unread_count'))
+            ->groupBy('sender_id')
+            ->get();
+
+        $counts = [];
+        foreach ($unreadCounts as $row) {
+            $counts[(string)$row->sender_id] = (int)$row->unread_count;
+        }
+
+        return response()->json($counts);
     }
 }

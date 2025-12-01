@@ -1,7 +1,6 @@
 import React from "react";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useUiStore } from "../../store/uiStore";
-import { ToastContainer } from "../../ui/Toast";
 import { clearAccessToken, getAccessToken } from "../../lib/tokenStore";
 import { MessageCircle, Settings, LogOut } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -44,7 +43,7 @@ class ErrorBoundary extends React.Component<
 }
 
 export default function AppLayout() {
-  const { toastQueue, removeToast, pushToast } = useUiStore();
+  const { pushToast } = useUiStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { data: user } = useSession();
@@ -97,12 +96,12 @@ export default function AppLayout() {
             >
               {user?.profile_picture_url ? (
                 <img
-                  src={`${getFullUrl(
-                    user.profile_picture_url
-                  )}?t=${Date.now()}`}
+                  src={getFullUrl(user.profile_picture_url) || undefined}
                   alt="avatar"
                   className="w-full h-full object-cover"
                   loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
                 />
               ) : (
                 <div
@@ -166,14 +165,6 @@ export default function AppLayout() {
           </ErrorBoundary>
         </main>
       </div>
-      <ToastContainer
-        toasts={toastQueue.map((t) => ({
-          id: t.id,
-          message: t.message,
-          variant: t.type,
-        }))}
-        onDismiss={removeToast}
-      />
     </div>
   );
 }

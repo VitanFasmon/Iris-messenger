@@ -15,7 +15,7 @@ interface ToastProps {
 export const ToastContainer: React.FC<ToastProps> = ({
   toasts,
   onDismiss,
-  duration = 4000,
+  duration = 2500,
 }) => {
   useEffect(() => {
     if (toasts.length === 0) return;
@@ -26,7 +26,7 @@ export const ToastContainer: React.FC<ToastProps> = ({
   }, [toasts, onDismiss, duration]);
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 w-72">
+    <div className="fixed top-20 right-4 z-50 flex flex-col gap-2 w-72">
       {toasts.map((t) => (
         <div
           key={t.id}

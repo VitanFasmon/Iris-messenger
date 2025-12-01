@@ -4,6 +4,7 @@ import {
   useQueryClient,
   useInfiniteQuery,
 } from "@tanstack/react-query";
+import { queryKeys } from "../../../lib/queryKeys";
 import {
   fetchMessages,
   fetchMessagesPage,
@@ -12,10 +13,8 @@ import {
   type Message,
 } from "../api/messages";
 
-const MESSAGES_KEY = (receiverId: string | number) => [
-  "directMessages",
-  receiverId,
-];
+const MESSAGES_KEY = (receiverId: string | number) =>
+  queryKeys.directMessages(receiverId);
 
 export function useDirectMessages(receiverId: string | number | null) {
   return useQuery<Message[]>({
@@ -29,10 +28,8 @@ export function useDirectMessages(receiverId: string | number | null) {
   });
 }
 
-const INFINITE_MESSAGES_KEY = (receiverId: string | number) => [
-  "directMessagesInfinite",
-  receiverId,
-];
+const INFINITE_MESSAGES_KEY = (receiverId: string | number) =>
+  queryKeys.directMessagesInfinite(receiverId);
 
 export function useInfiniteDirectMessages(
   receiverId: string | number | null,

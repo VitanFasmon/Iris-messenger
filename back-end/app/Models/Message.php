@@ -30,6 +30,10 @@ class Message extends Model
         'delete_after' => 'integer',
     ];
 
+    protected $attributes = [
+        'is_deleted' => false,
+    ];
+
     /**
      * Sender of the message
      */
@@ -52,6 +56,14 @@ class Message extends Model
     public function attachments()
     {
         return $this->hasMany(Attachment::class);
+    }
+
+    /**
+     * Read records for this message
+     */
+    public function reads()
+    {
+        return $this->hasMany(MessageRead::class);
     }
 
     /**

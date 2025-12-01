@@ -6,6 +6,7 @@ import {
 import { MessageBubble } from "./MessageBubble";
 import { useSession } from "../../auth/hooks/useSession";
 import { useTheme } from "../../../hooks/useTheme";
+import { useMarkAsRead } from "../hooks/useMarkAsRead";
 
 interface Props {
   receiverId: string | number | null;
@@ -23,13 +24,38 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
   } = useInfiniteDirectMessages(receiverId, 30);
   const { data: user } = useSession();
   const deleteMessage = useDeleteDirectMessage(receiverId);
+  const markAsRead = useMarkAsRead();
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const topRef = useRef<HTMLDivElement | null>(null);
+  const markedMessagesRef = useRef<Set<string | number>>(new Set());
 
   const messages = useMemo(() => {
     const pagesData = data?.pages || [];
     return pagesData.flat();
   }, [data]);
+
+  // Clear marked messages when switching conversations
+  useEffect(() => {
+    markedMessagesRef.current.clear();
+  }, [receiverId]);
+
+  // Mark messages as read when viewing the conversation
+  useEffect(() => {
+    if (!user || !receiverId || messages.length === 0) return;
+
+    // Find all messages where the current user is the receiver that haven't been marked yet
+    const unreadMessageIds = messages
+      .filter(
+        (m) => m.receiver_id === user.id && !markedMessagesRef.current.has(m.id)
+      )
+      .map((m) => m.id);
+
+    if (unreadMessageIds.length > 0) {
+      markAsRead.mutate({ message_ids: unreadMessageIds });
+      // Track that we've marked these messages
+      unreadMessageIds.forEach((id) => markedMessagesRef.current.add(id));
+    }
+  }, [messages, user, receiverId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

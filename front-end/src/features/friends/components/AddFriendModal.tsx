@@ -9,6 +9,7 @@ import {
 } from "../hooks/useFriends";
 import { timeAgo } from "../../../lib/time";
 import { useTheme } from "../../../hooks/useTheme";
+import { getFullUrl } from "../../../lib/urls";
 
 interface Props {
   onClose: () => void;
@@ -111,7 +112,7 @@ export const AddFriendModal: React.FC<Props> = ({ onClose }) => {
                   >
                     {lookup.data.profile_picture_url ? (
                       <img
-                        src={lookup.data.profile_picture_url}
+                        src={getFullUrl(lookup.data.profile_picture_url) || ""}
                         alt={`${lookup.data.username}'s avatar`}
                         className="w-full h-full object-cover"
                       />
@@ -202,7 +203,7 @@ export const AddFriendModal: React.FC<Props> = ({ onClose }) => {
                         >
                           {r.user.profile_picture_url ? (
                             <img
-                              src={r.user.profile_picture_url}
+                              src={getFullUrl(r.user.profile_picture_url) || ""}
                               alt={`${r.user.username}'s avatar`}
                               className="w-full h-full object-cover"
                             />
@@ -266,7 +267,7 @@ export const AddFriendModal: React.FC<Props> = ({ onClose }) => {
                         >
                           {o.user.profile_picture_url ? (
                             <img
-                              src={o.user.profile_picture_url}
+                              src={getFullUrl(o.user.profile_picture_url) || ""}
                               alt={`${o.user.username}'s avatar`}
                               className="w-full h-full object-cover"
                             />

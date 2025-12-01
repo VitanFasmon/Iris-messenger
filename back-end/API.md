@@ -160,6 +160,25 @@ Response:
 
 **Note:** Refreshing the token also updates the `last_online` timestamp.
 
+#### Change Password
+```bash
+POST /api/auth/password
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "current_password": "oldpassword123",
+  "new_password": "newsecurepassword"
+}
+```
+
+Response:
+```json
+{
+  "message": "Password changed successfully"
+}
+```
+
 ### Users
 
 #### Search User by Username
@@ -416,6 +435,104 @@ Response (example):
     "expires_at": "2025-11-29T12:39:56.000000Z"
   }
 ]
+```
+
+### Message Read Tracking
+
+#### Mark Messages as Read
+```bash
+POST /api/messages/mark-read
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "message_ids": [123, 124, 125]
+}
+```
+
+Marks an array of messages as read by the authenticated user. Only messages where the user is the receiver can be marked as read. The operation is idempotent - marking the same message multiple times has no additional effect.
+
+**Parameters:**
+- `message_ids` (required): Array of message IDs to mark as read
+
+**Validation:**
+- `message_ids` must be an array
+- All message IDs must exist in the database
+- User must be the receiver of the messages
+
+Response:
+```json
+{
+  "message": "Messages marked as read",
+  "marked_count": 3
+}
+```
+
+**Error Responses:**
+
+400 Bad Request (no valid messages):
+```json
+{
+  "error": "No valid messages to mark as read"
+}
+```
+
+422 Validation Error:
+```json
+{
+  "errors": {
+    "message_ids": ["The message ids field must be an array."]
+  }
+}
+```
+
+#### Get Unread Message Counts
+```bash
+GET /api/messages/unread-counts
+Authorization: Bearer {token}
+```
+
+Returns the number of unread messages from each sender. Only counts messages where:
+- The authenticated user is the receiver
+- The message has not been marked as read
+- The message is not deleted (`is_deleted = false`)
+- The message has not expired (if `expires_at` is set, it must be in the future)
+
+Response:
+```json
+{
+  "2": 5,
+  "3": 2,
+  "7": 1
+}
+```
+
+The response is a JSON object where keys are sender user IDs (as strings) and values are the count of unread messages from that sender.
+
+If there are no unread messages, returns an empty object:
+```json
+{}
+```
+
+**Usage Example:**
+
+When rendering a friend list, call this endpoint to get unread counts and display badges:
+
+```javascript
+const unreadCounts = await fetchUnreadCounts();
+// { "2": 5, "3": 2 }
+
+friends.forEach(friend => {
+  const unreadCount = unreadCounts[friend.id] || 0;
+  // Display badge if unreadCount > 0
+});
+```
+
+When opening a chat conversation, mark all messages as read:
+
+```javascript
+const messageIds = messages.map(m => m.id);
+await markMessagesAsRead({ message_ids: messageIds });
 ```
 
 ## Timed Message Deletion
