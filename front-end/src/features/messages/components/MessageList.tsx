@@ -42,6 +42,7 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
   // Mark messages as read when viewing the conversation
   useEffect(() => {
     if (!user || !receiverId || messages.length === 0) return;
+    if (markAsRead.isPending) return; // avoid overlapping mark-read calls
 
     // Find all messages where the current user is the receiver that haven't been marked yet
     const unreadMessageIds = messages
@@ -55,7 +56,7 @@ export const MessageList: React.FC<Props> = ({ receiverId }) => {
       // Track that we've marked these messages
       unreadMessageIds.forEach((id) => markedMessagesRef.current.add(id));
     }
-  }, [messages, user, receiverId]);
+  }, [messages, user, receiverId, markAsRead.isPending]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -52,6 +52,12 @@ Backend should be running at the host defined by `VITE_API_URL`.
 - Axios for HTTP with auth interceptors
 - Vitest + React Testing Library for unit testing
 
+### Messaging Hooks
+
+- `useMarkAsRead()`: Marks messages as read and immediately invalidates + refetches `unread-counts`.
+- `useUnreadCounts()`: Fetches unread counts per friend; polls every 30s, `staleTime=15s`.
+- `useInfiniteDirectMessages()`: Paginates direct messages for a conversation.
+
 ## Testing
 
 Run tests with:
@@ -67,6 +73,7 @@ Test files live in `src/test/` mirroring the feature structure.
 ## Accessibility
 
 This app follows WCAG 2.1 AA guidelines:
+
 - All interactive elements are keyboard accessible
 - Proper ARIA labels and roles throughout
 - Focus indicators visible on all interactive elements
@@ -75,7 +82,7 @@ This app follows WCAG 2.1 AA guidelines:
 
 ## Architecture
 
-```
+```text
 src/
   app/          - Router, providers, global layout (top navbar + mobile frame)
   features/     - Domain features (auth, friends, messages, profile)
@@ -125,7 +132,10 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 - Friend list previews built from `/messages/last` (eliminates N+1 queries).
 - Optimistic send: bubble enters `sending` state, then `sent` or `failed`.
 - Expiry: backend sets `expires_at` (from `delete_after` seconds). Frontend runs per‑message countdown and hides bubble instantly at zero.
-- **Read tracking**: Messages are marked as read when viewed. Backend tracks via `message_reads` table. Unread counts displayed as red badges on conversation list, updated via polling every 30 seconds.
+- **Read tracking**: Backend‑driven; when a thread is viewed, the client calls `POST /messages/mark-read` for received messages only. The backend stores reads in `message_reads`.
+- **Unread badges**: Derived solely from `GET /messages/unread-counts` (no client heuristics). Both `ConversationList` and `ChatsPage` show a red badge with the count.
+- **Refresh strategy**: On successful mark‑read, the client performs `invalidateQueries` + immediate `refetchQueries` of `unread-counts` to reflect changes instantly; background polling (30s) keeps it fresh.
+- **Idempotency & throttling**: Mark‑read is idempotent server‑side; client keeps a per‑mount `markedMessagesRef` to avoid spamming the endpoint and clears it when `receiverId` changes.
 
 ## Layout Overview
 
@@ -135,12 +145,14 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 - Accessible buttons with aria labels (timer, emoji, send).
 
 ## Security & Sanitization
+
 - Token kept out of localStorage (memory + optional sessionStorage).
 - `sanitize()` escapes `< >` on message content & previews at render.
 - Rate limiting on send: `throttle:30,1` (backend route middleware).
 - Attachments rendered only after successful upload.
 
 ## Presence & Status
+
 - Derived from `last_online` timestamps: `online <5m`, `recent <60m`, `offline` else.
 - Future: add `away (15-60m)` tier + tooltip with exact relative time.
 
@@ -150,10 +162,34 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 
 - Implemented backend-driven read tracking with `message_reads` table
 - Messages automatically marked as read when conversation is viewed
-- Unread message counts displayed as red badges on conversation list
+- Unread message counts displayed as red badges on conversation list and friends list in `ChatsPage`
 - Real-time updates via 30-second polling of unread counts endpoint
 - Idempotent marking prevents duplicate read records
-- Query invalidation ensures UI stays synchronized with backend state
+- Query invalidation + immediate refetch ensures UI stays synchronized with backend state
+- Replaced legacy `viewedChats` client-side heuristic with backend counts
+
+## Unread Tracking: Implementation Details
+
+- `MessageList`:
+  - On data load, finds messages where `receiver_id === me.id` that aren't in a local `markedMessagesRef`, and calls `useMarkAsRead().mutate({ message_ids })`.
+  - Adds those ids to `markedMessagesRef` to avoid repeat calls; clears the ref on `receiverId` change.
+- `ConversationList` and `ChatsPage`:
+  - Use `useUnreadCounts()`; access counts as `unreadCounts[String(friend.id)]`.
+  - Display a red badge when count > 0. No pulse ring heuristics.
+- React Query behavior:
+  - `useUnreadCounts`: `refetchInterval=30000`, `staleTime=15000`.
+  - `useMarkAsRead.onSuccess`: `invalidateQueries(['unread-counts'])` then `refetchQueries(['unread-counts'])`.
+
+### Troubleshooting Unread Badges
+
+- Badge doesn’t clear after viewing:
+  - Ensure API base is correct (`VITE_API_URL`) and you’re authenticated.
+  - Open DevTools → Network → confirm `POST /messages/mark-read` returns `200` with `marked_count > 0`.
+  - Confirm `GET /messages/unread-counts` returns `0` for that friend after the mutation; keys are string user ids.
+  - If running multiple tabs, make sure both tabs are authenticated; polling updates every 30s.
+- Requests spamming `mark-read`:
+  - Confirm the `MessageList` effect excludes already marked ids and that `markAsRead` isn’t in the effect deps.
+  - Verify `markedMessagesRef` clears when switching `receiverId`.
 
 ### Avatar Loading Fixes
 

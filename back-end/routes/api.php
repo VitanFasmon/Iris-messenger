@@ -50,7 +50,7 @@ Route::middleware('auth:api')->group(function () {
     // Message routes
     Route::get('messages/last', [MessageController::class, 'lastMessages']);
     Route::get('messages/unread-counts', [MessageController::class, 'unreadCounts']);
-    Route::post('messages/mark-read', [MessageController::class, 'markAsRead']);
+    Route::post('messages/mark-read', [MessageController::class, 'markAsRead'])->middleware('throttle:60,1');
     Route::get('messages/{receiver_id}', [MessageController::class, 'index']);
     Route::post('messages/{receiver_id}', [MessageController::class, 'store'])->middleware('throttle:30,1');
     Route::delete('messages/{id}', [MessageController::class, 'destroy']);
